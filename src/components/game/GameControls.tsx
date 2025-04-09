@@ -52,6 +52,12 @@ const GameControls: React.FC = () => {
 
   return (
     <div className="flex flex-col items-center gap-4 mb-6">
+      {state.gameStatus === "playing" && (
+        <div className="text-sm text-gray-600 mb-1">
+          Turn: {state.turnCount + 1} • Police: {state.police.length} • Grannies: {state.grannies.length}
+        </div>
+      )}
+      
       {state.gameStatus === "playing" && currentPlayer && (
         <>
           <div className={`p-3 rounded-lg ${getTeamColor()} text-center w-full max-w-md`}>

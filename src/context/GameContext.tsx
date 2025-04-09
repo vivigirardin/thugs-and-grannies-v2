@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useReducer } from "react";
 import { BoardState, GameAction, Position, Team } from "@/types/game";
 
@@ -27,6 +26,7 @@ const initialState: BoardState = {
   diceValue: 1,
   gameStatus: "setup",
   winner: null,
+  turnCount: 0,
 };
 
 // Generate initial board with exits, police, and grannies
@@ -100,8 +100,99 @@ const generateInitialBoard = (teams: Team[]): BoardState => {
   
   state.players = players;
   state.gameStatus = "playing";
+  state.turnCount = 0;
   
   return state;
+};
+
+// Helper function to add a new police officer to the board
+const addNewPolice = (state: BoardState): BoardState => {
+  const newState = { ...state };
+  
+  // Find a random empty cell that's not an exit or already occupied
+  const emptyCells: Position[] = [];
+  
+  for (let row = 0; row < BOARD_SIZE; row++) {
+    for (let col = 0; col < BOARD_SIZE; col++) {
+      const cell = state.cells[row][col];
+      if (cell.type === "path" && !cell.occupied) {
+        emptyCells.push({ row, col });
+      }
+    }
+  }
+  
+  if (emptyCells.length === 0) {
+    return state; // No empty cells to add police
+  }
+  
+  // Select a random empty cell
+  const randomIndex = Math.floor(Math.random() * emptyCells.length);
+  const newPolicePos = emptyCells[randomIndex];
+  
+  // Add the new police
+  newState.police = [...state.police, newPolicePos];
+  
+  // Update the cell type
+  newState.cells = [...state.cells];
+  newState.cells[newPolicePos.row] = [...state.cells[newPolicePos.row]];
+  newState.cells[newPolicePos.row][newPolicePos.col] = {
+    ...state.cells[newPolicePos.row][newPolicePos.col],
+    type: "police"
+  };
+  
+  return newState;
+};
+
+// Helper function to move grannies
+const moveGrannies = (state: BoardState): BoardState => {
+  const newState = { ...state };
+  const newCells = JSON.parse(JSON.stringify(state.cells)); // Deep copy
+  const newGrannies: Position[] = [];
+  
+  // For each granny, try to move in a random direction
+  state.grannies.forEach(granny => {
+    // Get possible moves (up, down, left, right)
+    const possibleMoves: Position[] = [
+      { row: granny.row - 1, col: granny.col }, // up
+      { row: granny.row + 1, col: granny.col }, // down
+      { row: granny.row, col: granny.col - 1 }, // left
+      { row: granny.row, col: granny.col + 1 }, // right
+    ].filter(pos => 
+      pos.row >= 0 && pos.row < BOARD_SIZE && 
+      pos.col >= 0 && pos.col < BOARD_SIZE &&
+      newCells[pos.row][pos.col].type === "path" &&
+      !newCells[pos.row][pos.col].occupied
+    );
+    
+    // If there are possible moves, select one randomly
+    let newPos: Position;
+    if (possibleMoves.length > 0) {
+      const randomIndex = Math.floor(Math.random() * possibleMoves.length);
+      newPos = possibleMoves[randomIndex];
+      
+      // Update the old cell
+      newCells[granny.row][granny.col] = {
+        ...newCells[granny.row][granny.col],
+        type: "path"
+      };
+      
+      // Update the new cell
+      newCells[newPos.row][newPos.col] = {
+        ...newCells[newPos.row][newPos.col],
+        type: "granny"
+      };
+    } else {
+      // Granny can't move, keep the same position
+      newPos = { ...granny };
+    }
+    
+    newGrannies.push(newPos);
+  });
+  
+  newState.grannies = newGrannies;
+  newState.cells = newCells;
+  
+  return newState;
 };
 
 // Game reducer
@@ -237,11 +328,26 @@ const gameReducer = (state: BoardState, action: GameAction): BoardState => {
         nextPlayer = (nextPlayer + 1) % state.players.length;
       }
       
-      return {
+      // Increment turn count if we've gone through all players
+      const turnCount = nextPlayer <= state.currentPlayer ? state.turnCount + 1 : state.turnCount;
+      
+      // Add new police officer every turn
+      let newState = {
         ...state,
         currentPlayer: nextPlayer,
         diceValue: 0, // Reset dice value
+        turnCount,
       };
+      
+      // Add a new police officer every turn
+      newState = addNewPolice(newState);
+      
+      // Move grannies every 3rd turn
+      if (turnCount % 3 === 0 && turnCount > 0) {
+        newState = moveGrannies(newState);
+      }
+      
+      return newState;
     }
       
     case "START_GAME":

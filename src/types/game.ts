@@ -33,6 +33,7 @@ export interface BoardState {
   diceValue: number;
   gameStatus: "setup" | "playing" | "ended";
   winner: Team | null;
+  turnCount: number;
 }
 
 export type GameAction = 
