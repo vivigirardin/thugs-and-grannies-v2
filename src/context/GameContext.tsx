@@ -2,7 +2,7 @@ import React, { createContext, useContext, useReducer } from "react";
 import { BoardState, GameAction, Position, Team } from "@/types/game";
 
 // Initial board size
-const BOARD_SIZE = 8;
+const BOARD_SIZE = 20;
 
 // Initial game state
 const initialState: BoardState = {
@@ -17,11 +17,17 @@ const initialState: BoardState = {
   police: [],
   grannies: [],
   exits: [
-    { row: 0, col: 0 },
-    { row: 0, col: BOARD_SIZE - 1 },
-    { row: BOARD_SIZE - 1, col: 0 },
-    { row: BOARD_SIZE - 1, col: BOARD_SIZE - 1 },
+    { row: 0, col: 5 },
+    { row: 5, col: 0 },
+    { row: BOARD_SIZE - 1, col: 15 },
+    { row: 15, col: BOARD_SIZE - 1 },
   ],
+  landmarks: {
+    city: [], // Will be populated during board generation
+    library: [],
+    school: [],
+    townhall: [],
+  },
   currentPlayer: 0,
   diceValue: 1,
   gameStatus: "setup",
@@ -29,19 +35,68 @@ const initialState: BoardState = {
   turnCount: 0,
 };
 
-// Generate initial board with exits, police, and grannies
+// Define landmark properties
+const landmarks = [
+  { type: "city", size: 4, position: { row: 0, col: 2 } }, // 4x4 city at top-left near exit
+  { type: "library", size: 3, position: { row: 2, col: BOARD_SIZE - 4 } }, // 3x3 library at top-right
+  { type: "school", size: 5, position: { row: BOARD_SIZE - 6, col: 2 } }, // 5x5 school at bottom-left
+  { type: "townhall", size: 3, position: { row: BOARD_SIZE - 4, col: BOARD_SIZE - 4 } }, // 3x3 townhall at bottom-right
+];
+
+// Generate initial board with exits, police, grannies, and landmarks
 const generateInitialBoard = (teams: Team[]): BoardState => {
   const state = { ...initialState };
+  state.cells = Array(BOARD_SIZE).fill(null).map((_, rowIndex) => 
+    Array(BOARD_SIZE).fill(null).map((_, colIndex) => ({
+      type: "path",
+      position: { row: rowIndex, col: colIndex },
+      occupied: false,
+    }))
+  );
   
-  // Set exit cells
+  // Set landmarks and keep track of their positions
+  const landmarkPositions: Record<string, Position[]> = {
+    city: [],
+    library: [],
+    school: [],
+    townhall: [],
+  };
+  
+  landmarks.forEach(landmark => {
+    const { type, size, position } = landmark;
+    const positions: Position[] = [];
+    
+    // Place the landmark on the board
+    for (let r = 0; r < size; r++) {
+      for (let c = 0; c < size; c++) {
+        const row = position.row + r;
+        const col = position.col + c;
+        
+        // Make sure we don't go out of bounds
+        if (row < BOARD_SIZE && col < BOARD_SIZE) {
+          state.cells[row][col].type = type as any;
+          positions.push({ row, col });
+        }
+      }
+    }
+    
+    // Store the positions for this landmark type
+    landmarkPositions[type] = positions;
+  });
+  
+  state.landmarks = landmarkPositions as any;
+  
+  // Set exit cells (they should be around landmarks but accessible)
   state.exits.forEach(exit => {
     state.cells[exit.row][exit.col].type = "exit";
   });
   
-  // Add police (2 for now)
+  // Add police (4 for a larger board)
   const police: Position[] = [
-    { row: Math.floor(BOARD_SIZE / 2) - 1, col: Math.floor(BOARD_SIZE / 2) - 1 },
-    { row: Math.floor(BOARD_SIZE / 2), col: Math.floor(BOARD_SIZE / 2) },
+    { row: Math.floor(BOARD_SIZE / 2) - 3, col: Math.floor(BOARD_SIZE / 2) - 3 },
+    { row: Math.floor(BOARD_SIZE / 2) + 2, col: Math.floor(BOARD_SIZE / 2) + 2 },
+    { row: Math.floor(BOARD_SIZE / 2) - 3, col: Math.floor(BOARD_SIZE / 2) + 2 },
+    { row: Math.floor(BOARD_SIZE / 2) + 2, col: Math.floor(BOARD_SIZE / 2) - 3 },
   ];
   
   police.forEach(pos => {
@@ -49,11 +104,14 @@ const generateInitialBoard = (teams: Team[]): BoardState => {
   });
   state.police = police;
   
-  // Add grannies (3 for now)
+  // Add grannies (6 for larger board)
   const grannies: Position[] = [
-    { row: 1, col: 3 },
-    { row: 3, col: 6 },
-    { row: 6, col: 2 },
+    { row: 3, col: 7 },
+    { row: 7, col: 12 },
+    { row: 12, col: 3 },
+    { row: 16, col: 7 },
+    { row: 7, col: 16 },
+    { row: 12, col: 12 },
   ];
   
   grannies.forEach(pos => {
@@ -63,23 +121,23 @@ const generateInitialBoard = (teams: Team[]): BoardState => {
   
   // Add players based on selected teams
   const players = teams.map((team, index) => {
-    // Position players in different starting corners
+    // Position players in different starting positions away from landmarks
     let position: Position;
     switch (index % 4) {
       case 0:
-        position = { row: 1, col: 1 };
+        position = { row: 10, col: 10 };
         break;
       case 1:
-        position = { row: 1, col: BOARD_SIZE - 2 };
+        position = { row: 10, col: BOARD_SIZE - 10 };
         break;
       case 2:
-        position = { row: BOARD_SIZE - 2, col: 1 };
+        position = { row: BOARD_SIZE - 10, col: 10 };
         break;
       case 3:
-        position = { row: BOARD_SIZE - 2, col: BOARD_SIZE - 2 };
+        position = { row: BOARD_SIZE - 10, col: BOARD_SIZE - 10 };
         break;
       default:
-        position = { row: 1, col: 1 };
+        position = { row: 10, col: 10 };
     }
     
     return {

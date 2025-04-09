@@ -1,7 +1,7 @@
 
 export type Team = "creeps" | "italian" | "politicians" | "japanese";
 
-export type CellType = "path" | "exit" | "police" | "granny" | "empty";
+export type CellType = "path" | "exit" | "police" | "granny" | "empty" | "city" | "library" | "school" | "townhall";
 
 export interface Position {
   row: number;
@@ -21,6 +21,7 @@ export interface Cell {
   position: Position;
   occupied: boolean;
   occupiedBy?: string; // player id
+  size?: number; // For landmarks like city, library, etc.
 }
 
 export interface BoardState {
@@ -29,6 +30,12 @@ export interface BoardState {
   police: Position[];
   grannies: Position[];
   exits: Position[];
+  landmarks: {
+    city: Position[];
+    library: Position[];
+    school: Position[];
+    townhall: Position[];
+  };
   currentPlayer: number;
   diceValue: number;
   gameStatus: "setup" | "playing" | "ended";

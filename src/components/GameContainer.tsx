@@ -9,9 +9,11 @@ import GameRules from "./game/GameRules";
 const GameContainer: React.FC = () => {
   return (
     <GameProvider>
-      <div className="flex flex-col items-center gap-4">
+      <div className="flex flex-col items-center gap-4 max-w-full overflow-hidden">
         <GameControls />
-        <GameBoard />
+        <div className="overflow-auto max-w-full">
+          <GameBoard />
+        </div>
         <TeamSelector />
         <div className="mt-4">
           <GameRules />

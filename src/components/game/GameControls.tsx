@@ -68,7 +68,7 @@ const GameControls: React.FC = () => {
             </h3>
           </div>
           
-          <div className="flex gap-4 items-center">
+          <div className="flex flex-wrap gap-4 items-center justify-center">
             <Button
               onClick={handleRollDice}
               disabled={
@@ -92,11 +92,18 @@ const GameControls: React.FC = () => {
             </Button>
           </div>
           
-          {state.diceValue > 0 && (
-            <p className="text-sm text-gray-600">
-              You can move up to {state.diceValue} spaces. Click on a highlighted cell to move.
+          <div className="text-sm text-gray-600 max-w-md text-center">
+            <p className="mb-1">Navigate through the city avoiding police and grannies.</p>
+            <p className="mb-1">
+              <span className="inline-block w-3 h-3 bg-blue-300 mr-1"></span> City
+              <span className="inline-block w-3 h-3 bg-amber-200 mx-1 ml-3"></span> Library
+              <span className="inline-block w-3 h-3 bg-green-200 mx-1 ml-3"></span> School
+              <span className="inline-block w-3 h-3 bg-purple-200 mx-1 ml-3"></span> Townhall
             </p>
-          )}
+            {state.diceValue > 0 && (
+              <p>You can move up to {state.diceValue} spaces. Click on a highlighted cell to move.</p>
+            )}
+          </div>
         </>
       )}
       

@@ -2,7 +2,7 @@
 import React from "react";
 import { Cell } from "@/types/game";
 import { useGame } from "@/context/GameContext";
-import { Shield, User, LogOut, CircleDot } from "lucide-react";
+import { Shield, User, LogOut, CircleDot, Building, Library, School, Building2 } from "lucide-react";
 
 interface GameCellProps {
   cell: Cell;
@@ -24,6 +24,14 @@ const GameCell: React.FC<GameCellProps> = ({ cell, onClick, isValidMove }) => {
         return "bg-game-police";
       case "granny":
         return "bg-game-granny";
+      case "city":
+        return "bg-blue-300";
+      case "library":
+        return "bg-amber-200";
+      case "school":
+        return "bg-green-200";
+      case "townhall":
+        return "bg-purple-200";
       default:
         return "bg-gray-200";
     }
@@ -46,28 +54,44 @@ const GameCell: React.FC<GameCellProps> = ({ cell, onClick, isValidMove }) => {
     }
   };
 
+  const renderLandmarkIcon = () => {
+    switch (cell.type) {
+      case "city":
+        return <Building className="w-6 h-6 text-blue-600" />;
+      case "library":
+        return <Library className="w-6 h-6 text-amber-600" />;
+      case "school":
+        return <School className="w-6 h-6 text-green-600" />;
+      case "townhall":
+        return <Building2 className="w-6 h-6 text-purple-600" />;
+      default:
+        return null;
+    }
+  };
+
   return (
     <div 
-      className={`w-12 h-12 flex items-center justify-center relative ${getCellClass()} ${
+      className={`w-8 h-8 flex items-center justify-center relative ${getCellClass()} ${
         isValidMove ? "cursor-pointer ring-2 ring-yellow-400" : ""
       }`}
       onClick={onClick}
     >
-      {cell.type === "exit" && <LogOut className="w-8 h-8 text-white" />}
-      {cell.type === "police" && <Shield className="w-8 h-8 text-white" />}
-      {cell.type === "granny" && <User className="w-8 h-8 text-pink-700" />}
+      {cell.type === "exit" && <LogOut className="w-6 h-6 text-white" />}
+      {cell.type === "police" && <Shield className="w-6 h-6 text-white" />}
+      {cell.type === "granny" && <User className="w-6 h-6 text-pink-700" />}
+      {renderLandmarkIcon()}
       
       {player && (
         <div 
-          className={`absolute inset-0 flex items-center justify-center ${getPlayerClass()} rounded-full m-2 border-2 border-white`}
+          className={`absolute inset-0 flex items-center justify-center ${getPlayerClass()} rounded-full m-1 border-2 border-white`}
         >
-          <span className="text-white font-bold">
+          <span className="text-white font-bold text-xs">
             {player.team.slice(0, 1).toUpperCase()}
           </span>
         </div>
       )}
 
-      {isValidMove && <CircleDot className="absolute top-0 right-0 w-4 h-4 text-yellow-400" />}
+      {isValidMove && <CircleDot className="absolute top-0 right-0 w-3 h-3 text-yellow-400" />}
     </div>
   );
 };

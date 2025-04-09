@@ -27,28 +27,37 @@ const GameBoard: React.FC = () => {
     }
   };
 
+  // Calculate if a cell is a valid move for the current player
+  const isValidMove = (rowIndex: number, colIndex: number) => {
+    if (state.gameStatus !== "playing" || !currentPlayer || 
+        currentPlayer.arrested || currentPlayer.escaped || state.diceValue === 0) {
+      return false;
+    }
+    
+    const cell = state.cells[rowIndex][colIndex];
+    
+    // Can't move to occupied cells, landmarks (except exits)
+    if (cell.occupied || 
+        (cell.type !== "path" && cell.type !== "exit" && cell.type !== "police" && cell.type !== "granny")) {
+      return false;
+    }
+    
+    const dx = Math.abs(rowIndex - currentPlayer.position.row);
+    const dy = Math.abs(colIndex - currentPlayer.position.col);
+    return dx + dy <= state.diceValue && dx + dy > 0;
+  };
+
   return (
-    <div className="flex flex-col items-center mb-6">
+    <div className="flex flex-col items-center mb-6 overflow-auto max-w-full">
       <div className="bg-game-board p-2 rounded-lg shadow-lg">
-        <div className="grid grid-cols-8 gap-1">
+        <div className="grid grid-cols-20 gap-0.5">
           {state.cells.map((row, rowIndex) => 
             row.map((cell, colIndex) => (
               <GameCell 
                 key={`${rowIndex}-${colIndex}`}
                 cell={cell}
                 onClick={() => handleCellClick({ row: rowIndex, col: colIndex })}
-                isValidMove={
-                  state.gameStatus === "playing" && 
-                  currentPlayer && 
-                  !currentPlayer.arrested && 
-                  !currentPlayer.escaped && 
-                  state.diceValue > 0 &&
-                  (() => {
-                    const dx = Math.abs(rowIndex - currentPlayer.position.row);
-                    const dy = Math.abs(colIndex - currentPlayer.position.col);
-                    return dx + dy <= state.diceValue && dx + dy > 0 && !cell.occupied;
-                  })()
-                }
+                isValidMove={isValidMove(rowIndex, colIndex)}
               />
             ))
           )}
