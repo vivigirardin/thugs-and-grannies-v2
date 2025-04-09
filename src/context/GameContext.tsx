@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useReducer } from "react";
 import { BoardState, GameAction, Position, Team } from "@/types/game";
 
@@ -91,12 +92,22 @@ const generateInitialBoard = (teams: Team[]): BoardState => {
     state.cells[exit.row][exit.col].type = "exit";
   });
   
-  // Add police (4 for a larger board)
+  // Make sure creeps and politicians are included in teams
+  let mergedTeams = [...teams];
+  if (!teams.includes("creeps")) {
+    mergedTeams.push("creeps");
+  }
+  if (!teams.includes("politicians")) {
+    mergedTeams.push("politicians");
+  }
+  
+  // Add initial police (5 for a larger board)
   const police: Position[] = [
     { row: Math.floor(BOARD_SIZE / 2) - 3, col: Math.floor(BOARD_SIZE / 2) - 3 },
     { row: Math.floor(BOARD_SIZE / 2) + 2, col: Math.floor(BOARD_SIZE / 2) + 2 },
     { row: Math.floor(BOARD_SIZE / 2) - 3, col: Math.floor(BOARD_SIZE / 2) + 2 },
     { row: Math.floor(BOARD_SIZE / 2) + 2, col: Math.floor(BOARD_SIZE / 2) - 3 },
+    { row: Math.floor(BOARD_SIZE / 2), col: Math.floor(BOARD_SIZE / 2) },
   ];
   
   police.forEach(pos => {
@@ -104,14 +115,11 @@ const generateInitialBoard = (teams: Team[]): BoardState => {
   });
   state.police = police;
   
-  // Add grannies (6 for larger board)
+  // Add initial grannies (3 for larger board)
   const grannies: Position[] = [
     { row: 3, col: 7 },
     { row: 7, col: 12 },
     { row: 12, col: 3 },
-    { row: 16, col: 7 },
-    { row: 7, col: 16 },
-    { row: 12, col: 12 },
   ];
   
   grannies.forEach(pos => {
@@ -119,8 +127,49 @@ const generateInitialBoard = (teams: Team[]): BoardState => {
   });
   state.grannies = grannies;
   
-  // Add players based on selected teams
-  const players = teams.map((team, index) => {
+  // Create 5 players for both creeps and politicians teams
+  const players = [];
+  const creepsPositions = [
+    { row: 8, col: 8 },
+    { row: 8, col: 9 },
+    { row: 8, col: 10 },
+    { row: 8, col: 11 },
+    { row: 8, col: 12 },
+  ];
+  
+  const politiciansPositions = [
+    { row: 12, col: 8 },
+    { row: 12, col: 9 },
+    { row: 12, col: 10 },
+    { row: 12, col: 11 },
+    { row: 12, col: 12 },
+  ];
+  
+  // Add 5 creeps players
+  for (let i = 0; i < 5; i++) {
+    players.push({
+      id: `creeps-${i}`,
+      team: "creeps" as Team,
+      position: creepsPositions[i],
+      escaped: false,
+      arrested: false,
+    });
+  }
+  
+  // Add 5 politicians players
+  for (let i = 0; i < 5; i++) {
+    players.push({
+      id: `politicians-${i}`,
+      team: "politicians" as Team,
+      position: politiciansPositions[i],
+      escaped: false,
+      arrested: false,
+    });
+  }
+  
+  // Add any other selected teams (except creeps and politicians which we already added)
+  let playerIndex = players.length;
+  mergedTeams.filter(team => team !== "creeps" && team !== "politicians").forEach((team, index) => {
     // Position players in different starting positions away from landmarks
     let position: Position;
     switch (index % 4) {
@@ -140,13 +189,13 @@ const generateInitialBoard = (teams: Team[]): BoardState => {
         position = { row: 10, col: 10 };
     }
     
-    return {
-      id: `player-${index}`,
+    players.push({
+      id: `player-${playerIndex++}`,
       team,
       position,
       escaped: false,
       arrested: false,
-    };
+    });
   });
   
   // Mark cells as occupied
@@ -163,7 +212,7 @@ const generateInitialBoard = (teams: Team[]): BoardState => {
   return state;
 };
 
-// Helper function to add a new police officer to the board
+// Helper function to add new police officers to the board
 const addNewPolice = (state: BoardState): BoardState => {
   const newState = { ...state };
   
@@ -183,20 +232,84 @@ const addNewPolice = (state: BoardState): BoardState => {
     return state; // No empty cells to add police
   }
   
-  // Select a random empty cell
-  const randomIndex = Math.floor(Math.random() * emptyCells.length);
-  const newPolicePos = emptyCells[randomIndex];
+  // Add 5 new police officers
+  const newPolicePositions: Position[] = [];
+  for (let i = 0; i < 5; i++) {
+    if (emptyCells.length === 0) break;
+    
+    // Select a random empty cell
+    const randomIndex = Math.floor(Math.random() * emptyCells.length);
+    const newPolicePos = emptyCells[randomIndex];
+    
+    newPolicePositions.push(newPolicePos);
+    
+    // Remove this cell from empty cells
+    emptyCells.splice(randomIndex, 1);
+  }
   
   // Add the new police
-  newState.police = [...state.police, newPolicePos];
+  newState.police = [...state.police, ...newPolicePositions];
   
-  // Update the cell type
+  // Update the cell types
   newState.cells = [...state.cells];
-  newState.cells[newPolicePos.row] = [...state.cells[newPolicePos.row]];
-  newState.cells[newPolicePos.row][newPolicePos.col] = {
-    ...state.cells[newPolicePos.row][newPolicePos.col],
-    type: "police"
-  };
+  newPolicePositions.forEach(pos => {
+    newState.cells[pos.row] = [...state.cells[pos.row]];
+    newState.cells[pos.row][pos.col] = {
+      ...state.cells[pos.row][pos.col],
+      type: "police"
+    };
+  });
+  
+  return newState;
+};
+
+// Helper function to add new grannies to the board
+const addNewGrannies = (state: BoardState): BoardState => {
+  const newState = { ...state };
+  
+  // Find a random empty cell that's not an exit or already occupied
+  const emptyCells: Position[] = [];
+  
+  for (let row = 0; row < BOARD_SIZE; row++) {
+    for (let col = 0; col < BOARD_SIZE; col++) {
+      const cell = state.cells[row][col];
+      if (cell.type === "path" && !cell.occupied) {
+        emptyCells.push({ row, col });
+      }
+    }
+  }
+  
+  if (emptyCells.length === 0) {
+    return state; // No empty cells to add grannies
+  }
+  
+  // Add 3 new grannies
+  const newGrannyPositions: Position[] = [];
+  for (let i = 0; i < 3; i++) {
+    if (emptyCells.length === 0) break;
+    
+    // Select a random empty cell
+    const randomIndex = Math.floor(Math.random() * emptyCells.length);
+    const newGrannyPos = emptyCells[randomIndex];
+    
+    newGrannyPositions.push(newGrannyPos);
+    
+    // Remove this cell from empty cells
+    emptyCells.splice(randomIndex, 1);
+  }
+  
+  // Add the new grannies
+  newState.grannies = [...state.grannies, ...newGrannyPositions];
+  
+  // Update the cell types
+  newState.cells = [...state.cells];
+  newGrannyPositions.forEach(pos => {
+    newState.cells[pos.row] = [...state.cells[pos.row]];
+    newState.cells[pos.row][pos.col] = {
+      ...state.cells[pos.row][pos.col],
+      type: "granny"
+    };
+  });
   
   return newState;
 };
@@ -389,7 +502,7 @@ const gameReducer = (state: BoardState, action: GameAction): BoardState => {
       // Increment turn count if we've gone through all players
       const turnCount = nextPlayer <= state.currentPlayer ? state.turnCount + 1 : state.turnCount;
       
-      // Add new police officer every turn
+      // Add new police officers every turn
       let newState = {
         ...state,
         currentPlayer: nextPlayer,
@@ -397,10 +510,13 @@ const gameReducer = (state: BoardState, action: GameAction): BoardState => {
         turnCount,
       };
       
-      // Add a new police officer every turn
+      // Add 5 new police officers every turn
       newState = addNewPolice(newState);
       
-      // Move grannies every 3rd turn
+      // Add 3 new grannies every turn
+      newState = addNewGrannies(newState);
+      
+      // Move existing grannies every 3rd turn
       if (turnCount % 3 === 0 && turnCount > 0) {
         newState = moveGrannies(newState);
       }

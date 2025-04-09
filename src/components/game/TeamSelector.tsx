@@ -1,5 +1,4 @@
-
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { useGame } from "@/context/GameContext";
@@ -8,7 +7,7 @@ import { CheckCircle } from "lucide-react";
 
 const TeamSelector: React.FC = () => {
   const { dispatch } = useGame();
-  const [selectedTeams, setSelectedTeams] = useState<Team[]>([]);
+  const [selectedTeams, setSelectedTeams] = useState<Team[]>(["creeps", "politicians"]);
   
   const teams: { id: Team; name: string }[] = [
     { id: "creeps", name: "The Creeps Gang" },
@@ -18,6 +17,8 @@ const TeamSelector: React.FC = () => {
   ];
   
   const toggleTeam = (team: Team) => {
+    if (team === "creeps" || team === "politicians") return;
+    
     setSelectedTeams(prev => 
       prev.includes(team)
         ? prev.filter(t => t !== team)
@@ -26,9 +27,7 @@ const TeamSelector: React.FC = () => {
   };
   
   const handleStartGame = () => {
-    if (selectedTeams.length > 0) {
-      dispatch({ type: "START_GAME", teams: selectedTeams });
-    }
+    dispatch({ type: "START_GAME", teams: selectedTeams });
   };
   
   const getTeamColorClass = (team: Team) => {
@@ -57,7 +56,11 @@ const TeamSelector: React.FC = () => {
             {teams.map(team => (
               <div 
                 key={team.id}
-                className={`p-4 rounded-lg cursor-pointer relative ${
+                className={`p-4 rounded-lg ${
+                  team.id === "creeps" || team.id === "politicians"
+                    ? "cursor-not-allowed opacity-75"
+                    : "cursor-pointer"
+                } relative ${
                   selectedTeams.includes(team.id) 
                     ? getTeamColorClass(team.id)
                     : "bg-muted"
@@ -68,17 +71,19 @@ const TeamSelector: React.FC = () => {
                 {selectedTeams.includes(team.id) && (
                   <CheckCircle className="absolute top-2 right-2 w-5 h-5" />
                 )}
+                {(team.id === "creeps" || team.id === "politicians") && (
+                  <div className="text-xs mt-1">Required</div>
+                )}
               </div>
             ))}
           </div>
           <p className="text-sm text-gray-500 mt-4">
-            Select at least one team to play with.
+            Creeps and Politicians are always included (5 players each). You may select additional teams.
           </p>
         </CardContent>
         <CardFooter>
           <Button 
             onClick={handleStartGame}
-            disabled={selectedTeams.length === 0}
             className="w-full"
           >
             Start Game
