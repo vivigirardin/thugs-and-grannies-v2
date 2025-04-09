@@ -2,7 +2,7 @@
 import React from "react";
 import { Cell } from "@/types/game";
 import { useGame } from "@/context/GameContext";
-import { Police, PersonStanding, Door, CircleDot } from "lucide-react";
+import { Shield, User, LogOut, CircleDot } from "lucide-react";
 
 interface GameCellProps {
   cell: Cell;
@@ -53,9 +53,9 @@ const GameCell: React.FC<GameCellProps> = ({ cell, onClick, isValidMove }) => {
       }`}
       onClick={onClick}
     >
-      {cell.type === "exit" && <Door className="w-8 h-8 text-white" />}
-      {cell.type === "police" && <Police className="w-8 h-8 text-white" />}
-      {cell.type === "granny" && <PersonStanding className="w-8 h-8 text-pink-700" />}
+      {cell.type === "exit" && <LogOut className="w-8 h-8 text-white" />}
+      {cell.type === "police" && <Shield className="w-8 h-8 text-white" />}
+      {cell.type === "granny" && <User className="w-8 h-8 text-pink-700" />}
       
       {player && (
         <div 
