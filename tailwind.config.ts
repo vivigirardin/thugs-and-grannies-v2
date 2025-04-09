@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss";
 
 export default {
@@ -61,6 +62,18 @@ export default {
 					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
+				},
+				// Game specific colors
+				game: {
+					board: '#f2e8c9',
+					creeps: '#e63946',
+					italian: '#2a9d8f',
+					politicians: '#457b9d', 
+					japanese: '#6a0572',
+					police: '#1d3557',
+					granny: '#ffafcc',
+					path: '#e9c46a',
+					exit: '#2ec4b6'
 				}
 			},
 			borderRadius: {
@@ -84,11 +97,19 @@ export default {
 					to: {
 						height: '0'
 					}
+				},
+				'dice-roll': {
+					'0%': { transform: 'rotateX(0deg) rotateY(0deg) rotateZ(0deg)' },
+					'25%': { transform: 'rotateX(180deg) rotateY(90deg) rotateZ(45deg)' },
+					'50%': { transform: 'rotateX(360deg) rotateY(180deg) rotateZ(90deg)' },
+					'75%': { transform: 'rotateX(180deg) rotateY(270deg) rotateZ(135deg)' },
+					'100%': { transform: 'rotateX(360deg) rotateY(360deg) rotateZ(180deg)' }
 				}
 			},
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
-				'accordion-up': 'accordion-up 0.2s ease-out'
+				'accordion-up': 'accordion-up 0.2s ease-out',
+				'dice-roll': 'dice-roll 0.5s ease-in-out'
 			}
 		}
 	},
