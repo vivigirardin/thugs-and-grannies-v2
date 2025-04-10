@@ -102,15 +102,43 @@ const generateInitialBoard = (teams: Team[]): BoardState => {
     mergedTeams.push("politicians");
   }
   
-  // Add initial police (5 for a larger board)
-  const police: Position[] = [
-    { row: Math.floor(BOARD_SIZE / 2) - 3, col: Math.floor(BOARD_SIZE / 2) - 3 },
-    { row: Math.floor(BOARD_SIZE / 2) + 2, col: Math.floor(BOARD_SIZE / 2) + 2 },
-    { row: Math.floor(BOARD_SIZE / 2) - 3, col: Math.floor(BOARD_SIZE / 2) + 2 },
-    { row: Math.floor(BOARD_SIZE / 2) + 2, col: Math.floor(BOARD_SIZE / 2) - 3 },
-    { row: Math.floor(BOARD_SIZE / 2), col: Math.floor(BOARD_SIZE / 2) },
-  ];
+  // Add initial police (5 for a larger board) - now with random positions
+  const police: Position[] = [];
+  const emptyCells: Position[] = [];
   
+  // Find all empty cells
+  for (let row = 0; row < BOARD_SIZE; row++) {
+    for (let col = 0; col < BOARD_SIZE; col++) {
+      // Skip cells that would be used for landmarks
+      const isLandmark = landmarks.some(landmark => {
+        const { size, position } = landmark;
+        return row >= position.row && row < position.row + size && 
+               col >= position.col && col < position.col + size;
+      });
+      
+      // Skip cells that would be used for exits
+      const isExit = state.exits.some(exit => 
+        exit.row === row && exit.col === col
+      );
+      
+      if (!isLandmark && !isExit) {
+        emptyCells.push({ row, col });
+      }
+    }
+  }
+  
+  // Randomly select 5 cells for police
+  for (let i = 0; i < 5; i++) {
+    if (emptyCells.length === 0) break;
+    
+    const randomIndex = Math.floor(Math.random() * emptyCells.length);
+    police.push(emptyCells[randomIndex]);
+    
+    // Remove the selected cell so we don't pick it again
+    emptyCells.splice(randomIndex, 1);
+  }
+  
+  // Set police on the board
   police.forEach(pos => {
     state.cells[pos.row][pos.col].type = "police";
   });
