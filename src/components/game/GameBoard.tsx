@@ -3,6 +3,7 @@ import React from "react";
 import { useGame } from "@/context/GameContext";
 import GameCell from "./GameCell";
 import { Position } from "@/types/game";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
 const GameBoard: React.FC = () => {
   const { state, dispatch } = useGame();
@@ -74,6 +75,38 @@ const GameBoard: React.FC = () => {
     return player && player.team === currentTeam && !player.arrested && !player.escaped;
   };
 
+  // Group arrested players by team to display in jail
+  const getJailedPlayersByTeam = () => {
+    const jailed = state.players.filter(p => p.arrested);
+    const byTeam: Record<string, typeof jailed> = {};
+    
+    jailed.forEach(player => {
+      if (!byTeam[player.team]) {
+        byTeam[player.team] = [];
+      }
+      byTeam[player.team].push(player);
+    });
+    
+    return byTeam;
+  };
+
+  const jailedPlayersByTeam = getJailedPlayersByTeam();
+
+  const getTeamColor = (team: string) => {
+    switch (team) {
+      case "creeps":
+        return "bg-game-creeps text-white";
+      case "italian":
+        return "bg-game-italian text-white";
+      case "politicians":
+        return "bg-game-politicians text-white";
+      case "japanese":
+        return "bg-game-japanese text-white";
+      default:
+        return "bg-gray-500 text-white";
+    }
+  };
+
   return (
     <div className="flex flex-col items-center mb-6 overflow-auto max-w-full">
       <div className="bg-game-board p-2 rounded-lg shadow-lg">
@@ -92,6 +125,37 @@ const GameBoard: React.FC = () => {
           )}
         </div>
       </div>
+
+      {/* Jail Section */}
+      {Object.keys(jailedPlayersByTeam).length > 0 && (
+        <div className="mt-6 p-3 bg-gray-800 rounded-lg w-full max-w-xl">
+          <div className="flex items-center mb-2">
+            <div className="w-6 h-6 mr-2 flex items-center justify-center text-white">
+              👮
+            </div>
+            <h3 className="text-white font-bold">Jail</h3>
+          </div>
+          <div className="flex flex-wrap gap-4">
+            {Object.entries(jailedPlayersByTeam).map(([team, players]) => (
+              <div key={team} className="flex flex-col items-center">
+                <div className="mb-1 text-xs text-gray-300 capitalize">{team}</div>
+                <div className="flex flex-wrap gap-2">
+                  {players.map(player => (
+                    <Avatar 
+                      key={player.id} 
+                      className={`w-8 h-8 ${getTeamColor(team)}`}
+                    >
+                      <AvatarFallback className="text-xs">
+                        {player.team.slice(0, 1).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 };

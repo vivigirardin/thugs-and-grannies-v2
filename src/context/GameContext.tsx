@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useReducer } from "react";
 import { BoardState, GameAction, Position, Team } from "@/types/game";
 
@@ -23,6 +22,7 @@ const initialState: BoardState = {
     { row: BOARD_SIZE - 1, col: 15 },
     { row: 15, col: BOARD_SIZE - 1 },
   ],
+  jailedPlayers: [], // Initialize the jailedPlayers array
   landmarks: {
     city: [], // Will be populated during board generation
     library: [],
@@ -366,6 +366,13 @@ const moveGrannies = (state: BoardState): BoardState => {
   newState.cells = newCells;
   
   return newState;
+};
+
+// Helper function to check if a player would be arrested by moving to position
+const wouldBeArrested = (position: Position, policePositions: Position[]): boolean => {
+  return policePositions.some(police => 
+    police.row === position.row && police.col === position.col
+  );
 };
 
 // Game reducer

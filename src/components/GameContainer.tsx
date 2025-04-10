@@ -11,7 +11,7 @@ const GameContainer: React.FC = () => {
     <GameProvider>
       <div className="flex flex-col items-center gap-4 max-w-full overflow-hidden">
         <GameControls />
-        <div className="overflow-auto max-w-full">
+        <div className="overflow-auto max-w-full w-full">
           <GameBoard />
         </div>
         <TeamSelector />

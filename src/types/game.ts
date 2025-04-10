@@ -30,6 +30,7 @@ export interface BoardState {
   police: Position[];
   grannies: Position[];
   exits: Position[];
+  jailedPlayers: Player[]; // New property to track jailed players
   landmarks: {
     city: Position[];
     library: Position[];

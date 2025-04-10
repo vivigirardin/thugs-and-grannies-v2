@@ -87,8 +87,12 @@ const GameCell: React.FC<GameCellProps> = ({
       onClick={onClick}
     >
       {cell.type === "exit" && <LogOut className="w-6 h-6 text-white" />}
-      {cell.type === "police" && <Shield className="w-6 h-6 text-white" />}
-      {cell.type === "granny" && <User className="w-6 h-6 text-pink-700" />}
+      {cell.type === "police" && (
+        <div className="text-xs font-bold">👮</div>
+      )}
+      {cell.type === "granny" && (
+        <div className="text-xs font-bold">👵</div>
+      )}
       {renderLandmarkIcon()}
       
       {player && (
