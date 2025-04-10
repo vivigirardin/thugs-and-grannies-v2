@@ -37,6 +37,7 @@ export interface BoardState {
     townhall: Position[];
   };
   currentPlayer: number;
+  activeMeeple: string | null; // ID of the currently selected meeple
   diceValue: number;
   gameStatus: "setup" | "playing" | "ended";
   winner: Team | null;
@@ -46,6 +47,7 @@ export interface BoardState {
 export type GameAction = 
   | { type: "ROLL_DICE" }
   | { type: "MOVE_PLAYER"; position: Position }
+  | { type: "SELECT_MEEPLE"; playerId: string }
   | { type: "NEXT_TURN" }
   | { type: "START_GAME"; teams: Team[] }
   | { type: "RESET_GAME" };

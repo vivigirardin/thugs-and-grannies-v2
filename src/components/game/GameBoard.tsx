@@ -6,31 +6,43 @@ import { Position } from "@/types/game";
 
 const GameBoard: React.FC = () => {
   const { state, dispatch } = useGame();
-  const currentPlayer = state.players[state.currentPlayer];
+  const currentTeam = state.players[state.currentPlayer]?.team;
+  const selectedMeeple = state.activeMeeple 
+    ? state.players.find(p => p.id === state.activeMeeple) 
+    : null;
 
   const handleCellClick = (position: Position) => {
-    if (state.gameStatus !== "playing" || !currentPlayer || currentPlayer.arrested || currentPlayer.escaped) {
+    if (state.gameStatus !== "playing") {
       return;
     }
 
-    if (state.diceValue === 0) {
-      return; // Player needs to roll the dice first
+    // If we have a selected meeple and dice is rolled, try to move
+    if (selectedMeeple && state.diceValue > 0 && !selectedMeeple.arrested && !selectedMeeple.escaped) {
+      // Check if the move is valid
+      const dx = Math.abs(position.row - selectedMeeple.position.row);
+      const dy = Math.abs(position.col - selectedMeeple.position.col);
+      const distance = dx + dy;
+
+      if (distance > 0 && distance <= state.diceValue) {
+        dispatch({ type: "MOVE_PLAYER", position });
+      }
+      return;
     }
 
-    // Check if the move is valid
-    const dx = Math.abs(position.row - currentPlayer.position.row);
-    const dy = Math.abs(position.col - currentPlayer.position.col);
-    const distance = dx + dy;
-
-    if (distance > 0 && distance <= state.diceValue) {
-      dispatch({ type: "MOVE_PLAYER", position });
+    // If we don't have a selected meeple, check if there's a meeple of the current team to select
+    const cell = state.cells[position.row][position.col];
+    if (cell.occupiedBy) {
+      const player = state.players.find(p => p.id === cell.occupiedBy);
+      if (player && player.team === currentTeam && !player.arrested && !player.escaped) {
+        dispatch({ type: "SELECT_MEEPLE", playerId: player.id });
+      }
     }
   };
 
-  // Calculate if a cell is a valid move for the current player
+  // Calculate if a cell is a valid move for the selected meeple
   const isValidMove = (rowIndex: number, colIndex: number) => {
-    if (state.gameStatus !== "playing" || !currentPlayer || 
-        currentPlayer.arrested || currentPlayer.escaped || state.diceValue === 0) {
+    if (state.gameStatus !== "playing" || !selectedMeeple || 
+        selectedMeeple.arrested || selectedMeeple.escaped || state.diceValue === 0) {
       return false;
     }
     
@@ -42,9 +54,24 @@ const GameBoard: React.FC = () => {
       return false;
     }
     
-    const dx = Math.abs(rowIndex - currentPlayer.position.row);
-    const dy = Math.abs(colIndex - currentPlayer.position.col);
+    const dx = Math.abs(rowIndex - selectedMeeple.position.row);
+    const dy = Math.abs(colIndex - selectedMeeple.position.col);
     return dx + dy <= state.diceValue && dx + dy > 0;
+  };
+
+  // Check if a cell contains a selectable meeple
+  const isSelectableMeeple = (rowIndex: number, colIndex: number) => {
+    if (state.gameStatus !== "playing" || state.activeMeeple !== null) {
+      return false;
+    }
+    
+    const cell = state.cells[rowIndex][colIndex];
+    if (!cell.occupiedBy) {
+      return false;
+    }
+    
+    const player = state.players.find(p => p.id === cell.occupiedBy);
+    return player && player.team === currentTeam && !player.arrested && !player.escaped;
   };
 
   return (
@@ -58,6 +85,8 @@ const GameBoard: React.FC = () => {
                 cell={cell}
                 onClick={() => handleCellClick({ row: rowIndex, col: colIndex })}
                 isValidMove={isValidMove(rowIndex, colIndex)}
+                isSelected={selectedMeeple?.position.row === rowIndex && selectedMeeple?.position.col === colIndex}
+                isSelectable={isSelectableMeeple(rowIndex, colIndex)}
               />
             ))
           )}

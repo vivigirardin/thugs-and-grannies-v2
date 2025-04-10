@@ -8,9 +8,17 @@ interface GameCellProps {
   cell: Cell;
   onClick: () => void;
   isValidMove: boolean;
+  isSelected?: boolean;
+  isSelectable?: boolean;
 }
 
-const GameCell: React.FC<GameCellProps> = ({ cell, onClick, isValidMove }) => {
+const GameCell: React.FC<GameCellProps> = ({ 
+  cell, 
+  onClick, 
+  isValidMove, 
+  isSelected = false,
+  isSelectable = false
+}) => {
   const { state } = useGame();
   const player = cell.occupiedBy ? state.players.find(p => p.id === cell.occupiedBy) : undefined;
 
@@ -72,7 +80,9 @@ const GameCell: React.FC<GameCellProps> = ({ cell, onClick, isValidMove }) => {
   return (
     <div 
       className={`w-8 h-8 flex items-center justify-center relative ${getCellClass()} ${
-        isValidMove ? "cursor-pointer ring-2 ring-yellow-400" : ""
+        isValidMove ? "cursor-pointer ring-2 ring-yellow-400" :
+        isSelectable ? "cursor-pointer ring-2 ring-blue-400" :
+        isSelected ? "ring-2 ring-green-500" : ""
       }`}
       onClick={onClick}
     >
@@ -83,7 +93,10 @@ const GameCell: React.FC<GameCellProps> = ({ cell, onClick, isValidMove }) => {
       
       {player && (
         <div 
-          className={`absolute inset-0 flex items-center justify-center ${getPlayerClass()} rounded-full m-1 border-2 border-white`}
+          className={`absolute inset-0 flex items-center justify-center ${getPlayerClass()} rounded-full m-1 border-2 ${
+            isSelected ? "border-green-500" :
+            isSelectable ? "border-blue-400" : "border-white"
+          }`}
         >
           <span className="text-white font-bold text-xs">
             {player.team.slice(0, 1).toUpperCase()}

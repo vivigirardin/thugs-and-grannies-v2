@@ -30,6 +30,7 @@ const initialState: BoardState = {
     townhall: [],
   },
   currentPlayer: 0,
+  activeMeeple: null,
   diceValue: 1,
   gameStatus: "setup",
   winner: null,
@@ -208,6 +209,7 @@ const generateInitialBoard = (teams: Team[]): BoardState => {
   state.players = players;
   state.gameStatus = "playing";
   state.turnCount = 0;
+  state.activeMeeple = null;
   
   return state;
 };
@@ -374,14 +376,41 @@ const gameReducer = (state: BoardState, action: GameAction): BoardState => {
         ...state,
         diceValue: Math.floor(Math.random() * 6) + 1,
       };
+    
+    case "SELECT_MEEPLE": {
+      const selectedPlayer = state.players.find(player => player.id === action.playerId);
+      
+      // Make sure the player belongs to the current team
+      if (!selectedPlayer || 
+          selectedPlayer.team !== state.players[state.currentPlayer].team ||
+          selectedPlayer.arrested || 
+          selectedPlayer.escaped) {
+        return state;
+      }
+      
+      return {
+        ...state,
+        activeMeeple: action.playerId,
+      };
+    }
       
     case "MOVE_PLAYER": {
-      const currentPlayer = state.players[state.currentPlayer];
+      // Now we use the activeMeeple instead of currentPlayer
+      if (!state.activeMeeple) {
+        return state; // No meeple selected
+      }
+      
+      const selectedPlayerIndex = state.players.findIndex(p => p.id === state.activeMeeple);
+      if (selectedPlayerIndex === -1) {
+        return state; // Player not found
+      }
+      
+      const selectedPlayer = state.players[selectedPlayerIndex];
       const newPosition = action.position;
       
       // Check if the move is valid
-      const dx = Math.abs(newPosition.row - currentPlayer.position.row);
-      const dy = Math.abs(newPosition.col - currentPlayer.position.col);
+      const dx = Math.abs(newPosition.row - selectedPlayer.position.row);
+      const dy = Math.abs(newPosition.col - selectedPlayer.position.col);
       const distance = dx + dy;
       
       if (distance > state.diceValue) {
@@ -403,14 +432,26 @@ const gameReducer = (state: BoardState, action: GameAction): BoardState => {
       if (isPolice) {
         // Player got arrested
         const newPlayers = [...state.players];
-        newPlayers[state.currentPlayer] = {
-          ...currentPlayer,
+        newPlayers[selectedPlayerIndex] = {
+          ...selectedPlayer,
           arrested: true,
+        };
+        
+        // Clear old cell
+        const oldPos = selectedPlayer.position;
+        const newCells = [...state.cells];
+        newCells[oldPos.row][oldPos.col] = {
+          ...newCells[oldPos.row][oldPos.col],
+          occupied: false,
+          occupiedBy: undefined,
         };
         
         return {
           ...state,
           players: newPlayers,
+          cells: newCells,
+          activeMeeple: null,
+          diceValue: 0,
         };
       }
       
@@ -423,7 +464,7 @@ const gameReducer = (state: BoardState, action: GameAction): BoardState => {
       const newPlayers = [...state.players];
       
       // Clear old cell
-      const oldPos = currentPlayer.position;
+      const oldPos = selectedPlayer.position;
       const newCells = [...state.cells];
       newCells[oldPos.row][oldPos.col] = {
         ...newCells[oldPos.row][oldPos.col],
@@ -432,8 +473,8 @@ const gameReducer = (state: BoardState, action: GameAction): BoardState => {
       };
       
       // Update player
-      newPlayers[state.currentPlayer] = {
-        ...currentPlayer,
+      newPlayers[selectedPlayerIndex] = {
+        ...selectedPlayer,
         position: newPosition,
         escaped: isExit,
       };
@@ -443,46 +484,51 @@ const gameReducer = (state: BoardState, action: GameAction): BoardState => {
         newCells[newPosition.row][newPosition.col] = {
           ...newCells[newPosition.row][newPosition.col],
           occupied: true,
-          occupiedBy: currentPlayer.id,
+          occupiedBy: selectedPlayer.id,
         };
       }
       
-      // Check if game is over (all players escaped or arrested)
-      const allPlayersFinished = newPlayers.every(
-        player => player.escaped || player.arrested
-      );
+      // Check if game is over (all players from a team escaped or arrested)
+      const remainingTeams = new Set<Team>();
+      for (const player of newPlayers) {
+        if (!player.arrested && !player.escaped) {
+          remainingTeams.add(player.team);
+        }
+      }
+      
+      const allPlayersFinished = remainingTeams.size === 0;
       
       // If game is over, determine the winning team
       let winner: Team | null = null;
       if (allPlayersFinished) {
-        const escapedPlayers = newPlayers.filter(player => player.escaped);
-        if (escapedPlayers.length > 0) {
-          // The team with the most escaped players wins
-          const teamCounts: Record<Team, number> = {
-            creeps: 0,
-            italian: 0,
-            politicians: 0,
-            japanese: 0,
-          };
-          
-          escapedPlayers.forEach(player => {
-            teamCounts[player.team] += 1;
-          });
-          
-          let maxEscaped = 0;
-          Object.entries(teamCounts).forEach(([team, count]) => {
-            if (count > maxEscaped) {
-              maxEscaped = count;
-              winner = team as Team;
-            }
-          });
+        const escapedCounts: Record<Team, number> = {
+          creeps: 0,
+          italian: 0,
+          politicians: 0,
+          japanese: 0,
+        };
+        
+        for (const player of newPlayers) {
+          if (player.escaped) {
+            escapedCounts[player.team]++;
+          }
         }
+        
+        let maxEscaped = 0;
+        Object.entries(escapedCounts).forEach(([team, count]) => {
+          if (count > maxEscaped) {
+            maxEscaped = count;
+            winner = team as Team;
+          }
+        });
       }
       
       return {
         ...state,
         cells: newCells,
         players: newPlayers,
+        activeMeeple: null,
+        diceValue: 0, // Reset dice after move
         gameStatus: allPlayersFinished ? "ended" : "playing",
         winner,
       };
@@ -490,13 +536,38 @@ const gameReducer = (state: BoardState, action: GameAction): BoardState => {
       
     case "NEXT_TURN": {
       let nextPlayer = (state.currentPlayer + 1) % state.players.length;
+      const currentTeam = state.players[state.currentPlayer].team;
       
-      // Skip arrested or escaped players
-      while (
-        (state.players[nextPlayer].arrested || state.players[nextPlayer].escaped) &&
-        state.players.some(p => !p.arrested && !p.escaped)
-      ) {
+      // Find the first player of a different team
+      while (state.players[nextPlayer].team === currentTeam) {
         nextPlayer = (nextPlayer + 1) % state.players.length;
+      }
+      
+      // Check if the team is completely eliminated or escaped
+      let teamEliminated = true;
+      const nextTeam = state.players[nextPlayer].team;
+      for (const player of state.players) {
+        if (player.team === nextTeam && !player.arrested && !player.escaped) {
+          teamEliminated = false;
+          break;
+        }
+      }
+      
+      // If team is eliminated, find the next team
+      if (teamEliminated) {
+        const startingPlayer = nextPlayer;
+        do {
+          nextPlayer = (nextPlayer + 1) % state.players.length;
+          if (nextPlayer === startingPlayer) {
+            // All teams are eliminated or escaped, game over
+            return {
+              ...state,
+              gameStatus: "ended",
+            };
+          }
+        } while (state.players.every(p => 
+          p.team === state.players[nextPlayer].team && (p.arrested || p.escaped)
+        ));
       }
       
       // Increment turn count if we've gone through all players
@@ -506,6 +577,7 @@ const gameReducer = (state: BoardState, action: GameAction): BoardState => {
       let newState = {
         ...state,
         currentPlayer: nextPlayer,
+        activeMeeple: null,
         diceValue: 0, // Reset dice value
         turnCount,
       };

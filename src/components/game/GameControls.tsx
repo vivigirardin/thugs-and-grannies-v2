@@ -6,7 +6,10 @@ import { Dice1, Dice2, Dice3, Dice4, Dice5, Dice6 } from "lucide-react";
 
 const GameControls: React.FC = () => {
   const { state, dispatch } = useGame();
-  const currentPlayer = state.players[state.currentPlayer];
+  const currentTeam = state.players[state.currentPlayer]?.team;
+  const selectedMeeple = state.activeMeeple 
+    ? state.players.find(p => p.id === state.activeMeeple) 
+    : null;
 
   const renderDice = () => {
     const DiceIcons = [
@@ -22,8 +25,8 @@ const GameControls: React.FC = () => {
   };
 
   const handleRollDice = () => {
-    if (state.gameStatus !== "playing") return;
-    if (currentPlayer && !currentPlayer.arrested && !currentPlayer.escaped) {
+    if (state.gameStatus !== "playing" || !selectedMeeple) return;
+    if (!selectedMeeple.arrested && !selectedMeeple.escaped) {
       dispatch({ type: "ROLL_DICE" });
     }
   };
@@ -34,9 +37,9 @@ const GameControls: React.FC = () => {
   };
 
   const getTeamColor = () => {
-    if (!currentPlayer) return "bg-gray-500";
+    if (!currentTeam) return "bg-gray-500";
     
-    switch (currentPlayer.team) {
+    switch (currentTeam) {
       case "creeps":
         return "bg-game-creeps text-white";
       case "italian":
@@ -50,6 +53,15 @@ const GameControls: React.FC = () => {
     }
   };
 
+  // Count available meeples for the current team
+  const getAvailableMeeples = () => {
+    if (!currentTeam) return 0;
+    
+    return state.players.filter(
+      p => p.team === currentTeam && !p.arrested && !p.escaped
+    ).length;
+  };
+
   return (
     <div className="flex flex-col items-center gap-4 mb-6">
       {state.gameStatus === "playing" && (
@@ -58,23 +70,23 @@ const GameControls: React.FC = () => {
         </div>
       )}
       
-      {state.gameStatus === "playing" && currentPlayer && (
+      {state.gameStatus === "playing" && currentTeam && (
         <>
           <div className={`p-3 rounded-lg ${getTeamColor()} text-center w-full max-w-md`}>
             <h3 className="font-bold text-lg capitalize">
-              {currentPlayer.team} Turn
-              {currentPlayer.arrested && " (Arrested)"}
-              {currentPlayer.escaped && " (Escaped)"}
+              {currentTeam} Turn
+              {selectedMeeple && ` (Meeple ${selectedMeeple.id.split('-')[1]} Selected)`}
             </h3>
+            <div className="text-sm mt-1">
+              {getAvailableMeeples()} meeples available
+            </div>
           </div>
           
           <div className="flex flex-wrap gap-4 items-center justify-center">
             <Button
               onClick={handleRollDice}
               disabled={
-                state.diceValue > 0 || 
-                currentPlayer.arrested || 
-                currentPlayer.escaped
+                !selectedMeeple || state.diceValue > 0
               }
               className="relative"
             >
@@ -93,16 +105,22 @@ const GameControls: React.FC = () => {
           </div>
           
           <div className="text-sm text-gray-600 max-w-md text-center">
-            <p className="mb-1">Navigate through the city avoiding police and grannies.</p>
-            <p className="mb-1">
+            {!selectedMeeple && (
+              <p className="font-semibold">First, click on one of your meeples to select it.</p>
+            )}
+            {selectedMeeple && state.diceValue === 0 && (
+              <p className="font-semibold">Roll the dice to determine how far you can move.</p>
+            )}
+            {state.diceValue > 0 && (
+              <p className="font-semibold">You can move up to {state.diceValue} spaces. Click on a highlighted cell to move.</p>
+            )}
+            <p className="mt-2">
               <span className="inline-block w-3 h-3 bg-blue-300 mr-1"></span> City
               <span className="inline-block w-3 h-3 bg-amber-200 mx-1 ml-3"></span> Library
               <span className="inline-block w-3 h-3 bg-green-200 mx-1 ml-3"></span> School
               <span className="inline-block w-3 h-3 bg-purple-200 mx-1 ml-3"></span> Townhall
             </p>
-            {state.diceValue > 0 && (
-              <p>You can move up to {state.diceValue} spaces. Click on a highlighted cell to move.</p>
-            )}
+            <p className="mt-1">Watch out for police 👮 and grannies 👵!</p>
           </div>
         </>
       )}
