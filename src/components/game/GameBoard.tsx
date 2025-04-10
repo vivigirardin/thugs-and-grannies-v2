@@ -49,9 +49,9 @@ const GameBoard: React.FC = () => {
     
     const cell = state.cells[rowIndex][colIndex];
     
-    // Can't move to occupied cells, landmarks (except exits)
-    if (cell.occupied || 
-        (cell.type !== "path" && cell.type !== "exit" && cell.type !== "police" && cell.type !== "granny")) {
+    // Can't move to occupied cells or cells with police or grannies
+    if (cell.occupied || cell.type === "police" || cell.type === "granny" || 
+        (cell.type !== "path" && cell.type !== "exit")) {
       return false;
     }
     

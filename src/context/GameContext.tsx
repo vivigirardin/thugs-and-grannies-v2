@@ -453,18 +453,15 @@ const gameReducer = (state: BoardState, action: GameAction): BoardState => {
         return state;
       }
       
-      // Check if cell is occupied
+      // Check if cell is occupied by another player
       if (state.cells[newPosition.row][newPosition.col].occupied) {
         // Can't move to an occupied cell
         return state;
       }
       
-      // Check for police
-      const isPolice = state.police.some(
-        pos => pos.row === newPosition.row && pos.col === newPosition.col
-      );
-      
-      if (isPolice) {
+      // Check if the cell is of type police or granny
+      const cellType = state.cells[newPosition.row][newPosition.col].type;
+      if (cellType === "police") {
         // Player got arrested
         const newPlayers = [...state.players];
         newPlayers[selectedPlayerIndex] = {
