@@ -30,12 +30,14 @@ const GameBoard: React.FC = () => {
       return;
     }
 
-    // If we don't have a selected meeple, check if there's a meeple of the current team to select
-    const cell = state.cells[position.row][position.col];
-    if (cell.occupiedBy) {
-      const player = state.players.find(p => p.id === cell.occupiedBy);
-      if (player && player.team === currentTeam && !player.arrested && !player.escaped) {
-        dispatch({ type: "SELECT_MEEPLE", playerId: player.id });
+    // If dice is rolled but no meeple is selected, check if there's a meeple of the current team to select
+    if (state.diceValue > 0) {
+      const cell = state.cells[position.row][position.col];
+      if (cell.occupiedBy) {
+        const player = state.players.find(p => p.id === cell.occupiedBy);
+        if (player && player.team === currentTeam && !player.arrested && !player.escaped) {
+          dispatch({ type: "SELECT_MEEPLE", playerId: player.id });
+        }
       }
     }
   };
@@ -62,7 +64,12 @@ const GameBoard: React.FC = () => {
 
   // Check if a cell contains a selectable meeple
   const isSelectableMeeple = (rowIndex: number, colIndex: number) => {
-    if (state.gameStatus !== "playing" || state.activeMeeple !== null) {
+    if (state.gameStatus !== "playing" || state.diceValue === 0) {
+      return false;
+    }
+    
+    // If a meeple is already selected, don't allow selecting another one
+    if (state.activeMeeple !== null) {
       return false;
     }
     

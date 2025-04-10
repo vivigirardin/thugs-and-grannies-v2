@@ -5,6 +5,7 @@ import GameBoard from "./game/GameBoard";
 import GameControls from "./game/GameControls";
 import TeamSelector from "./game/TeamSelector";
 import GameRules from "./game/GameRules";
+import "./game/GameStyles.css"; // Import game styles for dice animation
 
 const GameContainer: React.FC = () => {
   return (

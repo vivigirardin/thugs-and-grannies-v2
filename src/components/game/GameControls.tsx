@@ -12,6 +12,10 @@ const GameControls: React.FC = () => {
     : null;
 
   const renderDice = () => {
+    if (state.diceValue === 0) {
+      return null;
+    }
+
     const DiceIcons = [
       <Dice1 key={1} className="w-10 h-10" />,
       <Dice2 key={2} className="w-10 h-10" />,
@@ -21,14 +25,12 @@ const GameControls: React.FC = () => {
       <Dice6 key={6} className="w-10 h-10" />
     ];
     
-    return state.diceValue > 0 ? DiceIcons[state.diceValue - 1] : null;
+    return DiceIcons[state.diceValue - 1];
   };
 
   const handleRollDice = () => {
-    if (state.gameStatus !== "playing" || !selectedMeeple) return;
-    if (!selectedMeeple.arrested && !selectedMeeple.escaped) {
-      dispatch({ type: "ROLL_DICE" });
-    }
+    if (state.gameStatus !== "playing") return;
+    dispatch({ type: "ROLL_DICE" });
   };
 
   const handleEndTurn = () => {
@@ -83,18 +85,23 @@ const GameControls: React.FC = () => {
           </div>
           
           <div className="flex flex-wrap gap-4 items-center justify-center">
-            <Button
-              onClick={handleRollDice}
-              disabled={
-                !selectedMeeple || state.diceValue > 0
-              }
-              className="relative"
-            >
-              Roll Dice
-              <div className={`ml-2 ${state.diceValue > 0 ? "animate-dice-roll" : ""}`}>
-                {renderDice()}
+            {state.diceValue === 0 ? (
+              <Button
+                onClick={handleRollDice}
+                className="relative group" 
+              >
+                Roll Dice
+                <div className="ml-2 w-10 h-10 flex items-center justify-center bg-white/10 rounded">
+                  <Dice6 className="w-8 h-8 group-hover:animate-spin" />
+                </div>
+              </Button>
+            ) : (
+              <div className="p-4 bg-white rounded-lg shadow-lg animate-fade-in">
+                <div className={`animate-dice-roll`}>
+                  {renderDice()}
+                </div>
               </div>
-            </Button>
+            )}
             
             <Button
               onClick={handleEndTurn}
@@ -105,13 +112,11 @@ const GameControls: React.FC = () => {
           </div>
           
           <div className="text-sm text-gray-600 max-w-md text-center">
-            {!selectedMeeple && (
-              <p className="font-semibold">First, click on one of your meeples to select it.</p>
-            )}
-            {selectedMeeple && state.diceValue === 0 && (
-              <p className="font-semibold">Roll the dice to determine how far you can move.</p>
-            )}
-            {state.diceValue > 0 && (
+            {state.diceValue === 0 ? (
+              <p className="font-semibold">First, roll the dice to determine how far you can move.</p>
+            ) : !selectedMeeple ? (
+              <p className="font-semibold">Now, click on one of your meeples to select it.</p>
+            ) : (
               <p className="font-semibold">You can move up to {state.diceValue} spaces. Click on a highlighted cell to move.</p>
             )}
             <p className="mt-2">
