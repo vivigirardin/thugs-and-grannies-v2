@@ -1,16 +1,29 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { useGame } from "@/context/GameContext";
 import GameCell from "./GameCell";
 import { Position } from "@/types/game";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import { Dice1, Dice2, Dice3, Dice4, Dice5, Dice6, SkipForward } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 const GameBoard: React.FC = () => {
   const { state, dispatch } = useGame();
+  const { toast } = useToast();
   const currentTeam = state.players[state.currentPlayer]?.team;
   const selectedMeeple = state.activeMeeple 
     ? state.players.find(p => p.id === state.activeMeeple) 
     : null;
+  const [isDiceRolling, setIsDiceRolling] = useState(false);
+  const [showTurnDialog, setShowTurnDialog] = useState(false);
 
   const handleCellClick = (position: Position) => {
     if (state.gameStatus !== "playing") {
@@ -114,8 +127,50 @@ const GameBoard: React.FC = () => {
     }
   };
 
+  const renderDice = () => {
+    if (state.diceValue === 0) {
+      return <Dice6 className="w-12 h-12 opacity-50" />;
+    }
+
+    const DiceIcons = [
+      <Dice1 key={1} className="w-12 h-12" />,
+      <Dice2 key={2} className="w-12 h-12" />,
+      <Dice3 key={3} className="w-12 h-12" />,
+      <Dice4 key={4} className="w-12 h-12" />,
+      <Dice5 key={5} className="w-12 h-12" />,
+      <Dice6 key={6} className="w-12 h-12" />
+    ];
+    
+    return DiceIcons[state.diceValue - 1];
+  };
+
+  const handleRollDice = () => {
+    if (state.gameStatus !== "playing") return;
+    setIsDiceRolling(true);
+    
+    // Small delay to show animation before updating state
+    setTimeout(() => {
+      dispatch({ type: "ROLL_DICE" });
+      setIsDiceRolling(false);
+    }, 500);
+  };
+
+  const handleEndTurn = () => {
+    if (state.gameStatus !== "playing") return;
+    dispatch({ type: "NEXT_TURN" });
+    setShowTurnDialog(true);
+  };
+
+  // Open turn dialog at the start of a new team's turn
+  React.useEffect(() => {
+    if (state.gameStatus === "playing" && state.diceValue === 0) {
+      setShowTurnDialog(true);
+    }
+  }, [state.currentPlayer, state.gameStatus]);
+
   return (
-    <div className="flex flex-col items-center mb-6 overflow-auto max-w-full">
+    <div className="flex flex-col items-center mb-6 overflow-auto max-w-full relative">
+      {/* Game Board */}
       <div className="bg-game-board p-2 rounded-lg shadow-lg">
         <div className="grid grid-cols-20 gap-0.5">
           {state.cells.map((row, rowIndex) => 
@@ -131,6 +186,56 @@ const GameBoard: React.FC = () => {
             ))
           )}
         </div>
+      </div>
+
+      {/* Turn Dialog */}
+      <Dialog open={showTurnDialog} onOpenChange={setShowTurnDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-center capitalize">
+              {currentTeam}'s Turn
+            </DialogTitle>
+            <DialogDescription className="text-center">
+              Roll the dice to determine how far you can move.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="flex flex-col items-center gap-6 py-4">
+            <div className={`p-4 rounded-full ${getTeamColor(currentTeam || "")}`}>
+              <div className={`${isDiceRolling ? 'animate-dice-roll' : ''}`}>
+                {renderDice()}
+              </div>
+            </div>
+            
+            {state.diceValue === 0 ? (
+              <Button 
+                onClick={handleRollDice}
+                className="w-32"
+              >
+                Roll Dice
+              </Button>
+            ) : (
+              <div className="text-center">
+                <p className="mb-2 text-lg font-medium">You rolled a {state.diceValue}!</p>
+                <p className="text-sm text-gray-600">Click a meeple to select it, then click a highlighted cell to move.</p>
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Next Turn Button (fixed to right side) */}
+      <div className="fixed right-4 top-1/2 transform -translate-y-1/2 z-10">
+        <Button 
+          onClick={handleEndTurn}
+          variant="outline"
+          size="lg"
+          className="flex flex-col items-center gap-1 bg-white shadow-lg"
+          disabled={state.gameStatus !== "playing"}
+        >
+          <SkipForward className="w-6 h-6" />
+          <span className="text-xs">End Turn</span>
+        </Button>
       </div>
 
       {/* Jail Section */}

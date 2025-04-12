@@ -51,4 +51,5 @@ export type GameAction =
   | { type: "SELECT_MEEPLE"; playerId: string }
   | { type: "NEXT_TURN" }
   | { type: "START_GAME"; teams: Team[] }
-  | { type: "RESET_GAME" };
+  | { type: "RESET_GAME" }
+  | { type: "PLAYER_CAUGHT"; playerId: string };

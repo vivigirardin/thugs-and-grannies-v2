@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useReducer } from "react";
 import { BoardState, GameAction, Position, Team } from "@/types/game";
 
@@ -102,60 +103,7 @@ const generateInitialBoard = (teams: Team[]): BoardState => {
     mergedTeams.push("politicians");
   }
   
-  // Add initial police (5 for a larger board) - now with random positions
-  const police: Position[] = [];
-  const emptyCells: Position[] = [];
-  
-  // Find all empty cells
-  for (let row = 0; row < BOARD_SIZE; row++) {
-    for (let col = 0; col < BOARD_SIZE; col++) {
-      // Skip cells that would be used for landmarks
-      const isLandmark = landmarks.some(landmark => {
-        const { size, position } = landmark;
-        return row >= position.row && row < position.row + size && 
-               col >= position.col && col < position.col + size;
-      });
-      
-      // Skip cells that would be used for exits
-      const isExit = state.exits.some(exit => 
-        exit.row === row && exit.col === col
-      );
-      
-      if (!isLandmark && !isExit) {
-        emptyCells.push({ row, col });
-      }
-    }
-  }
-  
-  // Randomly select 5 cells for police
-  for (let i = 0; i < 5; i++) {
-    if (emptyCells.length === 0) break;
-    
-    const randomIndex = Math.floor(Math.random() * emptyCells.length);
-    police.push(emptyCells[randomIndex]);
-    
-    // Remove the selected cell so we don't pick it again
-    emptyCells.splice(randomIndex, 1);
-  }
-  
-  // Set police on the board
-  police.forEach(pos => {
-    state.cells[pos.row][pos.col].type = "police";
-  });
-  state.police = police;
-  
-  // Add initial grannies (3 for larger board)
-  const grannies: Position[] = [
-    { row: 3, col: 7 },
-    { row: 7, col: 12 },
-    { row: 12, col: 3 },
-  ];
-  
-  grannies.forEach(pos => {
-    state.cells[pos.row][pos.col].type = "granny";
-  });
-  state.grannies = grannies;
-  
+  // Create players before adding police to ensure police don't spawn on player positions
   // Create 5 players for both creeps and politicians teams
   const players = [];
   const creepsPositions = [
@@ -235,6 +183,65 @@ const generateInitialBoard = (teams: Team[]): BoardState => {
   });
   
   state.players = players;
+  
+  // Add initial police AFTER players are placed, making sure they don't overlap
+  const police: Position[] = [];
+  const emptyCells: Position[] = [];
+  
+  // Find all empty cells that are not occupied by players
+  for (let row = 0; row < BOARD_SIZE; row++) {
+    for (let col = 0; col < BOARD_SIZE; col++) {
+      // Skip cells that are used for landmarks, exits, or players
+      const isLandmark = landmarks.some(landmark => {
+        const { size, position } = landmark;
+        return row >= position.row && row < position.row + size && 
+               col >= position.col && col < position.col + size;
+      });
+      
+      const isExit = state.exits.some(exit => 
+        exit.row === row && exit.col === col
+      );
+      
+      const isOccupied = state.cells[row][col].occupied;
+      
+      if (!isLandmark && !isExit && !isOccupied) {
+        emptyCells.push({ row, col });
+      }
+    }
+  }
+  
+  // Randomly select 5 cells for police
+  for (let i = 0; i < 5; i++) {
+    if (emptyCells.length === 0) break;
+    
+    const randomIndex = Math.floor(Math.random() * emptyCells.length);
+    police.push(emptyCells[randomIndex]);
+    
+    // Remove the selected cell so we don't pick it again
+    emptyCells.splice(randomIndex, 1);
+  }
+  
+  // Set police on the board
+  police.forEach(pos => {
+    state.cells[pos.row][pos.col].type = "police";
+  });
+  state.police = police;
+  
+  // Add initial grannies (3 for larger board)
+  const grannies: Position[] = [
+    { row: 3, col: 7 },
+    { row: 7, col: 12 },
+    { row: 12, col: 3 },
+  ];
+  
+  grannies.forEach(pos => {
+    // Make sure grannies don't overlap with players or police
+    if (!state.cells[pos.row][pos.col].occupied && state.cells[pos.row][pos.col].type !== "police") {
+      state.cells[pos.row][pos.col].type = "granny";
+    }
+  });
+  state.grannies = grannies;
+  
   state.gameStatus = "playing";
   state.turnCount = 0;
   state.activeMeeple = null;
@@ -246,7 +253,7 @@ const generateInitialBoard = (teams: Team[]): BoardState => {
 const addNewPolice = (state: BoardState): BoardState => {
   const newState = { ...state };
   
-  // Find a random empty cell that's not an exit or already occupied
+  // Find a random empty cell that's not an exit or already occupied by players, police, or grannies
   const emptyCells: Position[] = [];
   
   for (let row = 0; row < BOARD_SIZE; row++) {
@@ -289,6 +296,34 @@ const addNewPolice = (state: BoardState): BoardState => {
       type: "police"
     };
   });
+  
+  // Check if any police is on the same cell as a player (this shouldn't happen but add safety check)
+  let playerCaptured = false;
+  newState.players = state.players.map(player => {
+    if (player.arrested || player.escaped) return player;
+    
+    const isOnPolice = newPolicePositions.some(
+      pos => pos.row === player.position.row && pos.col === player.position.col
+    );
+    
+    if (isOnPolice) {
+      playerCaptured = true;
+      return { ...player, arrested: true };
+    }
+    return player;
+  });
+  
+  // If a player was captured during this police placement, we need to clean up occupied cells
+  if (playerCaptured) {
+    newState.players.forEach(player => {
+      if (player.arrested && !state.players.find(p => p.id === player.id)?.arrested) {
+        // This player was just arrested, clear their cell
+        const { row, col } = player.position;
+        newState.cells[row][col].occupied = false;
+        newState.cells[row][col].occupiedBy = undefined;
+      }
+    });
+  }
   
   return newState;
 };
@@ -642,6 +677,38 @@ const gameReducer = (state: BoardState, action: GameAction): BoardState => {
           }))
         ),
       };
+      
+    case "PLAYER_CAUGHT": {
+      const { playerId } = action;
+      const playerIndex = state.players.findIndex(p => p.id === playerId);
+      
+      if (playerIndex === -1) {
+        return state;
+      }
+      
+      const player = state.players[playerIndex];
+      const newPlayers = [...state.players];
+      newPlayers[playerIndex] = {
+        ...player,
+        arrested: true,
+      };
+      
+      // Clear old cell
+      const oldPos = player.position;
+      const newCells = [...state.cells];
+      newCells[oldPos.row][oldPos.col] = {
+        ...newCells[oldPos.row][oldPos.col],
+        occupied: false,
+        occupiedBy: undefined,
+      };
+      
+      return {
+        ...state,
+        players: newPlayers,
+        cells: newCells,
+        activeMeeple: null,
+      };
+    }
       
     default:
       return state;
