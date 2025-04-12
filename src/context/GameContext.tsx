@@ -124,90 +124,57 @@ const generateInitialBoard = (teams: Team[]): BoardState => {
   
   state.landmarks = landmarkPositions as any;
   
-  // Set exit cells (they should be around landmarks but accessible)
+  // Distribute exits evenly around the board (one in each corner)
+  state.exits = [
+    { row: 0, col: 0 },                         // Top-left
+    { row: 0, col: BOARD_SIZE - 1 },            // Top-right
+    { row: BOARD_SIZE - 1, col: 0 },            // Bottom-left
+    { row: BOARD_SIZE - 1, col: BOARD_SIZE - 1 } // Bottom-right
+  ];
+  
+  // Set exit cells
   state.exits.forEach(exit => {
     state.cells[exit.row][exit.col].type = "exit";
   });
   
-  // Make sure creeps and politicians are included in teams
-  let mergedTeams = [...teams];
-  if (!teams.includes("creeps")) {
-    mergedTeams.push("creeps");
-  }
-  if (!teams.includes("politicians")) {
-    mergedTeams.push("politicians");
-  }
-  
-  // Create players and place them randomly on the board
+  // Create players and place them inside buildings
   const players = [];
-  const availablePositions: Position[] = [];
   
-  // Collect all available positions that are path cells
-  for (let row = 0; row < BOARD_SIZE; row++) {
-    for (let col = 0; col < BOARD_SIZE; col++) {
-      if (state.cells[row][col].type === "path") {
-        availablePositions.push({ row, col });
-      }
-    }
-  }
-  
-  // Shuffle the positions
-  const shuffledPositions = [...availablePositions].sort(() => 0.5 - Math.random());
-  
-  // Function to get a random position and remove it from the available list
-  const getRandomPosition = (): Position => {
-    if (shuffledPositions.length === 0) {
-      return { row: 10, col: 10 }; // Fallback position
-    }
-    return shuffledPositions.pop()!;
+  // Function to get positions inside a building
+  const getPositionsInsideBuilding = (building: string, count: number): Position[] => {
+    const buildingCells = landmarkPositions[building];
+    if (!buildingCells || buildingCells.length === 0) return [];
+    
+    // Shuffle positions to randomize placement
+    const shuffled = [...buildingCells].sort(() => 0.5 - Math.random());
+    return shuffled.slice(0, Math.min(count, shuffled.length));
   };
   
-  // Create 5 players for each team (creeps, politicians)
-  const creepsTeam = mergedTeams.includes("creeps") ? "creeps" : null;
-  const politiciansTeam = mergedTeams.includes("politicians") ? "politicians" : null;
+  // List of buildings to place teams in
+  const buildings = ['city', 'library', 'school', 'townhall'];
   
-  if (creepsTeam) {
-    for (let i = 0; i < 5; i++) {
-      players.push({
-        id: `creeps-${i}`,
-        team: creepsTeam as Team,
-        position: getRandomPosition(),
-        escaped: false,
-        arrested: false,
-      });
-    }
-  }
-  
-  if (politiciansTeam) {
-    for (let i = 0; i < 5; i++) {
-      players.push({
-        id: `politicians-${i}`,
-        team: politiciansTeam as Team,
-        position: getRandomPosition(),
-        escaped: false,
-        arrested: false,
-      });
-    }
-  }
-  
-  // Add any other selected teams
-  mergedTeams.filter(team => team !== "creeps" && team !== "politicians").forEach((team, teamIndex) => {
-    for (let i = 0; i < 5; i++) {
-      players.push({
-        id: `${team}-${i}`,
-        team,
-        position: getRandomPosition(),
-        escaped: false,
-        arrested: false,
-      });
-    }
-  });
-  
-  // Mark cells as occupied by players
-  players.forEach(player => {
-    const { row, col } = player.position;
-    state.cells[row][col].occupied = true;
-    state.cells[row][col].occupiedBy = player.id;
+  // Place each team in a different building
+  teams.forEach((team, index) => {
+    // Distribute teams evenly across buildings
+    const buildingType = buildings[index % buildings.length];
+    const positions = getPositionsInsideBuilding(buildingType, 5); // 5 players per team
+    
+    // Create 5 players for this team
+    positions.forEach((pos, playerIndex) => {
+      if (playerIndex < 5) { // Limit to 5 players per team
+        players.push({
+          id: `${team}-${playerIndex}`,
+          team,
+          position: pos,
+          escaped: false,
+          arrested: false,
+        });
+        
+        // Mark cell as occupied
+        state.cells[pos.row][pos.col].occupied = true;
+        state.cells[pos.row][pos.col].occupiedBy = `${team}-${playerIndex}`;
+      }
+    });
   });
   
   state.players = players;
