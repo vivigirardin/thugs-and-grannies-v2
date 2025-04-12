@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
@@ -17,8 +18,6 @@ const TeamSelector: React.FC = () => {
   ];
   
   const toggleTeam = (team: Team) => {
-    if (team === "creeps" || team === "politicians") return;
-    
     setSelectedTeams(prev => 
       prev.includes(team)
         ? prev.filter(t => t !== team)
@@ -27,6 +26,10 @@ const TeamSelector: React.FC = () => {
   };
   
   const handleStartGame = () => {
+    // Ensure at least one team is selected
+    if (selectedTeams.length === 0) {
+      return;
+    }
     dispatch({ type: "START_GAME", teams: selectedTeams });
   };
   
@@ -56,11 +59,7 @@ const TeamSelector: React.FC = () => {
             {teams.map(team => (
               <div 
                 key={team.id}
-                className={`p-4 rounded-lg ${
-                  team.id === "creeps" || team.id === "politicians"
-                    ? "cursor-not-allowed opacity-75"
-                    : "cursor-pointer"
-                } relative ${
+                className={`p-4 rounded-lg cursor-pointer relative ${
                   selectedTeams.includes(team.id) 
                     ? getTeamColorClass(team.id)
                     : "bg-muted"
@@ -71,20 +70,18 @@ const TeamSelector: React.FC = () => {
                 {selectedTeams.includes(team.id) && (
                   <CheckCircle className="absolute top-2 right-2 w-5 h-5" />
                 )}
-                {(team.id === "creeps" || team.id === "politicians") && (
-                  <div className="text-xs mt-1">Required</div>
-                )}
               </div>
             ))}
           </div>
           <p className="text-sm text-gray-500 mt-4">
-            Creeps and Politicians are always included (5 players each). You may select additional teams.
+            Select at least one team. Each team will have 5 players.
           </p>
         </CardContent>
         <CardFooter>
           <Button 
             onClick={handleStartGame}
             className="w-full"
+            disabled={selectedTeams.length === 0}
           >
             Start Game
           </Button>

@@ -67,6 +67,10 @@
 
 .bg-game-granny {
   background-color: #d53f8c;
+  /* Make granny cells larger and more visible */
+  transform: scale(1.05);
+  box-shadow: 0 0 3px rgba(0, 0, 0, 0.4);
+  z-index: 4;
 }
 
 .bg-game-board {

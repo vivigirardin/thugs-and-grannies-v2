@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Square } from "@/types/game";
 import { useGame } from "@/context/GameContext";
@@ -95,7 +94,7 @@ const GameCell: React.FC<GameCellProps> = ({
         <div className="text-xs font-bold police-icon">👮</div>
       )}
       {cell.type === "granny" && (
-        <div className="text-xs font-bold">👵</div>
+        <div className="text-xs font-bold text-white text-lg">👵</div>
       )}
       {renderLandmarkIcon()}
       

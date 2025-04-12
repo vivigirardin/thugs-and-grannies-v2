@@ -301,9 +301,8 @@ const checkForPlayerCapture = (state: BoardState, newPolicePositions: Position[]
   newState.players = state.players.map(player => {
     if (player.arrested || player.escaped) return player;
     
+    // Police can only catch players if they're on the same square
     const isOnPolice = newPolicePositions.some(
-      pos => pos.row === player.position.row && pos.col === player.position.col
-    ) || state.police.some(
       pos => pos.row === player.position.row && pos.col === player.position.col
     );
     
@@ -553,7 +552,7 @@ const movePolice = (state: BoardState): BoardState => {
       }
     }
     
-    // Check if the new position has a player
+    // Check if the new position has a player - police can only catch players they move onto
     const targetCell = newCells[newPos.row][newPos.col];
     if (targetCell.occupied) {
       const player = state.players.find(p => p.id === targetCell.occupiedBy);
@@ -578,7 +577,7 @@ const movePolice = (state: BoardState): BoardState => {
     newPolicePositions.push(newPos);
   });
   
-  // Handle caught players
+  // Handle caught players - only caught if police moves onto their square
   newState.players = state.players.map(player => {
     if (playersCaught.some(p => p.id === player.id)) {
       toast({
