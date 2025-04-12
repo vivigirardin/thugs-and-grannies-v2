@@ -697,7 +697,7 @@ const gameReducer = (state: BoardState, action: GameAction): BoardState => {
           toast({
             title: "Can't Move!",
             description: `This meeple is distracted by a nearby puppy 🐶`,
-            variant: "warning"
+            variant: "destructive"
           });
         }
         
@@ -783,7 +783,7 @@ const gameReducer = (state: BoardState, action: GameAction): BoardState => {
           toast({
             title: "Can't Move!",
             description: "You can't move through a granny. Try going around!",
-            variant: "warning"
+            variant: "destructive"
           });
           return state;
         }
@@ -954,7 +954,7 @@ const gameReducer = (state: BoardState, action: GameAction): BoardState => {
       
       const turnCount = nextPlayer <= state.currentPlayer ? state.turnCount + 1 : state.turnCount;
       
-      const newState = {
+      let newState = {
         ...state,
         currentPlayer: nextPlayer,
         activeMeeple: null,

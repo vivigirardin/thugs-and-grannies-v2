@@ -60,3 +60,4 @@ export type GameAction =
   | { type: "START_GAME"; teams: Team[] }
   | { type: "RESET_GAME" }
   | { type: "PLAYER_CAUGHT"; playerId: string };
+
