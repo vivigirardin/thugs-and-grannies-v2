@@ -1,7 +1,7 @@
 
 export type Team = "creeps" | "italian" | "politicians" | "japanese";
 
-export type CellType = "path" | "exit" | "police" | "granny" | "empty" | "city" | "library" | "school" | "townhall";
+export type CellType = "path" | "exit" | "police" | "granny" | "empty" | "city" | "library" | "school" | "townhall" | "entrance";
 
 export interface Position {
   row: number;
@@ -22,6 +22,7 @@ export interface Cell {
   occupied: boolean;
   occupiedBy?: string; // player id
   size?: number; // For landmarks like city, library, etc.
+  connectedTo?: Position; // For entrances/exits within buildings
 }
 
 export interface BoardState {
@@ -36,6 +37,9 @@ export interface BoardState {
     library: Position[];
     school: Position[];
     townhall: Position[];
+  };
+  buildingEntrances: {
+    [key: string]: Position[];
   };
   currentPlayer: number;
   activeMeeple: string | null; // ID of the currently selected meeple

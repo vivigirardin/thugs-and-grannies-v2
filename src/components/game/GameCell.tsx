@@ -2,7 +2,7 @@
 import React from "react";
 import { Cell } from "@/types/game";
 import { useGame } from "@/context/GameContext";
-import { Shield, User, LogOut, CircleDot, Building, Library, School, Building2 } from "lucide-react";
+import { Shield, User, LogOut, CircleDot, Building, Library, School, Building2, DoorOpen } from "lucide-react";
 
 interface GameCellProps {
   cell: Cell;
@@ -40,6 +40,8 @@ const GameCell: React.FC<GameCellProps> = ({
         return "bg-green-200";
       case "townhall":
         return "bg-purple-200";
+      case "entrance":
+        return "bg-yellow-400";
       default:
         return "bg-gray-200";
     }
@@ -72,6 +74,8 @@ const GameCell: React.FC<GameCellProps> = ({
         return <School className="w-6 h-6 text-green-600" />;
       case "townhall":
         return <Building2 className="w-6 h-6 text-purple-600" />;
+      case "entrance":
+        return <DoorOpen className="w-6 h-6 text-yellow-700" />;
       default:
         return null;
     }

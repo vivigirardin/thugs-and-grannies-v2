@@ -32,7 +32,15 @@ const GameBoard: React.FC = () => {
 
     // If we have a selected meeple and dice is rolled, try to move
     if (selectedMeeple && state.diceValue > 0 && !selectedMeeple.arrested && !selectedMeeple.escaped) {
-      // Check if the move is valid
+      // Check if this is an entrance
+      const targetCell = state.cells[position.row][position.col];
+      if (targetCell.type === "entrance" && targetCell.connectedTo) {
+        // Special case for entrances - can move regardless of dice value
+        dispatch({ type: "MOVE_PLAYER", position });
+        return;
+      }
+      
+      // Regular move - check distance
       const dx = Math.abs(position.row - selectedMeeple.position.row);
       const dy = Math.abs(position.col - selectedMeeple.position.col);
       const distance = dx + dy;
@@ -63,6 +71,11 @@ const GameBoard: React.FC = () => {
     }
     
     const cell = state.cells[rowIndex][colIndex];
+    
+    // Special case for entrances - can always use them
+    if (cell.type === "entrance" && !cell.occupied) {
+      return true;
+    }
     
     // Can't move to occupied cells or cells with police or grannies
     if (cell.occupied || cell.type === "police" || cell.type === "granny" || 
