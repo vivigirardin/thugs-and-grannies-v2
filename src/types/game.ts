@@ -47,6 +47,7 @@ export interface BoardState {
   gameStatus: "setup" | "playing" | "ended";
   winner: Team | null;
   turnCount: number;
+  policeChains: Position[][]; // Added to track chains of police
 }
 
 export type GameAction = 

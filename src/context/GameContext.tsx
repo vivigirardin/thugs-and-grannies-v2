@@ -34,10 +34,11 @@ const initialState: BoardState = {
   buildingEntrances: {}, // Will be populated during board generation
   currentPlayer: 0,
   activeMeeple: null,
-  diceValue: 1,
+  diceValue: 0, // This will be set to 0 so player can roll dice at start
   gameStatus: "setup",
   winner: null,
   turnCount: 0,
+  policeChains: [], // Add new property to track chains of police
 };
 
 // Define landmark properties
@@ -201,8 +202,8 @@ const generateInitialBoard = (teams: Team[]): BoardState => {
   
   state.buildingEntrances = buildingEntrances;
   
-  // Add initial police AFTER players are placed, making sure they don't overlap
-  const police: Position[] = [];
+  // Add initial police chains (2 chains with 3 officers in each)
+  const policeChains: Position[][] = [];
   const emptyCells: Position[] = [];
   
   // Find all empty cells that are not occupied by players
@@ -220,22 +221,60 @@ const generateInitialBoard = (teams: Team[]): BoardState => {
     }
   }
   
-  // Randomly select 5 cells for police
-  for (let i = 0; i < 5; i++) {
-    if (emptyCells.length === 0) break;
+  // Create 2 initial police chains with 3 officers each
+  for (let chainIndex = 0; chainIndex < 2; chainIndex++) {
+    if (emptyCells.length < 3) break; // Not enough empty cells
     
-    const randomIndex = Math.floor(Math.random() * emptyCells.length);
-    police.push(emptyCells[randomIndex]);
+    // Pick a random starting point for this chain
+    const startIndex = Math.floor(Math.random() * emptyCells.length);
+    const startPos = emptyCells[startIndex];
+    emptyCells.splice(startIndex, 1);
     
-    // Remove the selected cell so we don't pick it again
-    emptyCells.splice(randomIndex, 1);
+    const chain: Position[] = [startPos];
+    
+    // Add 2 more officers to the chain
+    for (let i = 0; i < 2; i++) {
+      // Find adjacent empty cells to the last officer in the chain
+      const lastPos = chain[chain.length - 1];
+      const adjacentPositions = [
+        { row: lastPos.row - 1, col: lastPos.col }, // up
+        { row: lastPos.row + 1, col: lastPos.col }, // down
+        { row: lastPos.row, col: lastPos.col - 1 }, // left
+        { row: lastPos.row, col: lastPos.col + 1 }, // right
+      ].filter(pos => 
+        pos.row >= 0 && pos.row < BOARD_SIZE && 
+        pos.col >= 0 && pos.col < BOARD_SIZE &&
+        state.cells[pos.row][pos.col].type === "path" &&
+        !state.cells[pos.row][pos.col].occupied
+      );
+      
+      if (adjacentPositions.length > 0) {
+        // Pick a random adjacent position
+        const nextPos = adjacentPositions[Math.floor(Math.random() * adjacentPositions.length)];
+        chain.push(nextPos);
+        
+        // Remove this position from emptyCells
+        const indexToRemove = emptyCells.findIndex(p => p.row === nextPos.row && p.col === nextPos.col);
+        if (indexToRemove >= 0) {
+          emptyCells.splice(indexToRemove, 1);
+        }
+      }
+    }
+    
+    policeChains.push(chain);
   }
   
   // Set police on the board
-  police.forEach(pos => {
-    state.cells[pos.row][pos.col].type = "police";
+  const police: Position[] = [];
+  policeChains.forEach(chain => {
+    chain.forEach(pos => {
+      police.push(pos);
+      state.cells[pos.row][pos.col].type = "police";
+    });
   });
+  
   state.police = police;
+  state.policeChains = policeChains;
   
   // Add initial grannies (3 for larger board)
   const grannies: Position[] = [];
@@ -257,6 +296,7 @@ const generateInitialBoard = (teams: Team[]): BoardState => {
   state.gameStatus = "playing";
   state.turnCount = 0;
   state.activeMeeple = null;
+  state.diceValue = 0; // Set to 0 so the first player can roll the dice
   
   return state;
 };
@@ -326,23 +366,70 @@ const addNewPolice = (state: BoardState): BoardState => {
     return state; // No empty cells to add police
   }
   
-  // Add 5 new police officers
+  // Add 3 new police officers to each existing chain
+  const updatedChains = [...state.policeChains];
   const newPolicePositions: Position[] = [];
-  for (let i = 0; i < 5; i++) {
-    if (emptyCells.length === 0) break;
-    
-    // Select a random empty cell
-    const randomIndex = Math.floor(Math.random() * emptyCells.length);
-    const newPolicePos = emptyCells[randomIndex];
-    
-    newPolicePositions.push(newPolicePos);
-    
-    // Remove this cell from empty cells
-    emptyCells.splice(randomIndex, 1);
-  }
   
-  // Add the new police
-  newState.police = [...state.police, ...newPolicePositions];
+  updatedChains.forEach((chain, chainIndex) => {
+    if (chain.length === 0) return;
+    
+    // Find the last officer in the chain
+    const lastOfficer = chain[chain.length - 1];
+    
+    // Try to find 3 adjacent cells to add new officers
+    const adjacentCells: Position[] = [];
+    const potentialAdjacent = [
+      { row: lastOfficer.row - 1, col: lastOfficer.col }, // up
+      { row: lastOfficer.row + 1, col: lastOfficer.col }, // down
+      { row: lastOfficer.row, col: lastOfficer.col - 1 }, // left
+      { row: lastOfficer.row, col: lastOfficer.col + 1 }, // right
+    ];
+    
+    // Filter to only include valid empty cells
+    potentialAdjacent.forEach(pos => {
+      if (pos.row >= 0 && pos.row < BOARD_SIZE && 
+          pos.col >= 0 && pos.col < BOARD_SIZE &&
+          state.cells[pos.row][pos.col].type === "path" && 
+          !state.cells[pos.row][pos.col].occupied) {
+        adjacentCells.push(pos);
+      }
+    });
+    
+    // If we can't find adjacent cells, find nearby cells
+    if (adjacentCells.length === 0) {
+      // Try cells that are 2 spaces away
+      const nearbyPositions = [];
+      for (let r = Math.max(0, lastOfficer.row - 2); r <= Math.min(BOARD_SIZE - 1, lastOfficer.row + 2); r++) {
+        for (let c = Math.max(0, lastOfficer.col - 2); c <= Math.min(BOARD_SIZE - 1, lastOfficer.col + 2); c++) {
+          if (r !== lastOfficer.row || c !== lastOfficer.col) {
+            if (state.cells[r][c].type === "path" && !state.cells[r][c].occupied) {
+              nearbyPositions.push({ row: r, col: c });
+            }
+          }
+        }
+      }
+      
+      // Take up to 3 nearby positions
+      for (let i = 0; i < 3 && nearbyPositions.length > 0; i++) {
+        const randomIndex = Math.floor(Math.random() * nearbyPositions.length);
+        const newPos = nearbyPositions[randomIndex];
+        nearbyPositions.splice(randomIndex, 1);
+        
+        newPolicePositions.push(newPos);
+        updatedChains[chainIndex] = [...updatedChains[chainIndex], newPos];
+      }
+    } else {
+      // Take up to 3 adjacent positions
+      for (let i = 0; i < 3 && adjacentCells.length > 0; i++) {
+        const randomIndex = Math.floor(Math.random() * adjacentCells.length);
+        const newPos = adjacentCells[randomIndex];
+        adjacentCells.splice(randomIndex, 1);
+        
+        newPolicePositions.push(newPos);
+        updatedChains[chainIndex] = [...updatedChains[chainIndex], newPos];
+      }
+    }
+  });
   
   // Update the cell types
   newState.cells = [...state.cells];
@@ -353,6 +440,10 @@ const addNewPolice = (state: BoardState): BoardState => {
       type: "police"
     };
   });
+  
+  // Update police chains and positions
+  newState.policeChains = updatedChains;
+  newState.police = [...state.police, ...newPolicePositions];
   
   // Check if any players are caught by the new police
   return checkForPlayerCapture(newState, newPolicePositions);
@@ -842,15 +933,15 @@ const gameReducer = (state: BoardState, action: GameAction): BoardState => {
         ...state,
         currentPlayer: nextPlayer,
         activeMeeple: null,
-        diceValue: 0, // Reset dice value
+        diceValue: 0, // Reset dice value so player can roll
         turnCount,
       };
       
-      // Move existing police every turn (this is the key change for making cops catch thugs)
+      // Move existing police every turn
       newState = movePolice(newState);
       
-      // Add new police officers every 3 turns
-      if (turnCount % 3 === 0 && turnCount > 0) {
+      // Add new police officers every 2 turns (changed from 3 to make police grow faster)
+      if (turnCount % 2 === 0 && turnCount > 0) {
         newState = addNewPolice(newState);
       }
       
