@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useGame } from "@/context/GameContext";
 import GameCell from "./GameCell";
@@ -91,11 +90,6 @@ const GameBoard: React.FC = () => {
   // Check if a cell contains a selectable meeple
   const isSelectableMeeple = (rowIndex: number, colIndex: number) => {
     if (state.gameStatus !== "playing" || state.diceValue === 0) {
-      return false;
-    }
-    
-    // If a meeple is already selected, don't allow selecting another one
-    if (state.activeMeeple !== null) {
       return false;
     }
     

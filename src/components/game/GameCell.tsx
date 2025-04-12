@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Square } from "@/types/game";
 import { useGame } from "@/context/GameContext";
@@ -28,9 +29,9 @@ const GameCell: React.FC<GameCellProps> = ({
       case "exit":
         return "bg-game-exit";
       case "police":
-        return "bg-game-police";
+        return "bg-game-police"; // This applies the correct scale transform
       case "granny":
-        return "bg-game-granny";
+        return "bg-game-granny"; // This applies the correct scale transform
       case "city":
         return "bg-blue-300";
       case "library":

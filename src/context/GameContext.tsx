@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useReducer } from "react";
 import { BoardState, GameAction, Position, Team, Square, Meeple } from "@/types/game";
 import { toast } from "@/hooks/use-toast";
@@ -18,10 +19,10 @@ const initialState: BoardState = {
   police: [],
   grannies: [],
   exits: [
-    { row: 0, col: 5 },
-    { row: 5, col: 0 },
-    { row: BOARD_SIZE - 1, col: 15 },
-    { row: 15, col: BOARD_SIZE - 1 },
+    { row: 8, col: 0 },
+    { row: 12, col: 0 },
+    { row: 8, col: BOARD_SIZE - 1 },
+    { row: 12, col: BOARD_SIZE - 1 },
   ],
   jailedPlayers: [], // Initialize the jailedPlayers array
   landmarks: {
@@ -124,12 +125,12 @@ const generateInitialBoard = (teams: Team[]): BoardState => {
   
   state.landmarks = landmarkPositions as any;
   
-  // Distribute exits evenly around the board (one in each corner)
+  // Use the new exit positions as specified
   state.exits = [
-    { row: 0, col: 0 },                         // Top-left
-    { row: 0, col: BOARD_SIZE - 1 },            // Top-right
-    { row: BOARD_SIZE - 1, col: 0 },            // Bottom-left
-    { row: BOARD_SIZE - 1, col: BOARD_SIZE - 1 } // Bottom-right
+    { row: 8, col: 0 },             // Left middle-top
+    { row: 12, col: 0 },            // Left middle-bottom
+    { row: 8, col: BOARD_SIZE - 1 }, // Right middle-top
+    { row: 12, col: BOARD_SIZE - 1 } // Right middle-bottom
   ];
   
   // Set exit cells
