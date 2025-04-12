@@ -73,6 +73,14 @@
   z-index: 4;
 }
 
+.bg-game-puppy {
+  background-color: #8b5cf6;
+  /* Make puppy cells larger and more visible */
+  transform: scale(1.05);
+  box-shadow: 0 0 3px rgba(0, 0, 0, 0.4);
+  z-index: 4;
+}
+
 .bg-game-board {
   background-color: #1a202c;
 }
@@ -101,7 +109,7 @@
     font-size: 0.9rem;
   }
   
-  .bg-game-police, .bg-game-granny {
+  .bg-game-police, .bg-game-granny, .bg-game-puppy {
     transform: scale(1.05);
   }
 }

@@ -32,6 +32,8 @@ const GameCell: React.FC<GameCellProps> = ({
         return "bg-game-police"; // This applies the correct scale transform
       case "granny":
         return "bg-game-granny"; // This applies the correct scale transform
+      case "puppy":
+        return "bg-game-puppy"; // New type for puppies
       case "city":
         return "bg-blue-300";
       case "library":
@@ -50,18 +52,29 @@ const GameCell: React.FC<GameCellProps> = ({
   const getPlayerClass = () => {
     if (!player) return "";
     
+    // Check if player is immobilized by a puppy
+    const isImmobilized = state.immobilizedPlayers && 
+      state.immobilizedPlayers.includes(player.id);
+    
+    let baseClass = "";
     switch (player.team) {
       case "creeps":
-        return "bg-game-creeps";
+        baseClass = "bg-game-creeps";
+        break;
       case "italian":
-        return "bg-game-italian";
+        baseClass = "bg-game-italian";
+        break;
       case "politicians":
-        return "bg-game-politicians";
+        baseClass = "bg-game-politicians";
+        break;
       case "japanese":
-        return "bg-game-japanese";
+        baseClass = "bg-game-japanese";
+        break;
       default:
-        return "bg-gray-500";
+        baseClass = "bg-gray-500";
     }
+    
+    return isImmobilized ? `${baseClass} opacity-70` : baseClass;
   };
 
   const renderLandmarkIcon = () => {
@@ -96,6 +109,9 @@ const GameCell: React.FC<GameCellProps> = ({
       )}
       {cell.type === "granny" && (
         <div className="text-xs font-bold text-white text-lg">👵</div>
+      )}
+      {cell.type === "puppy" && (
+        <div className="text-xs font-bold text-white text-lg">🐶</div>
       )}
       {renderLandmarkIcon()}
       

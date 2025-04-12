@@ -1,7 +1,7 @@
 
 export type Team = "creeps" | "italian" | "politicians" | "japanese";
 
-export type CellType = "path" | "exit" | "police" | "granny" | "empty" | "city" | "library" | "school" | "townhall" | "entrance";
+export type CellType = "path" | "exit" | "police" | "granny" | "empty" | "city" | "library" | "school" | "townhall" | "entrance" | "puppy";
 
 export interface Position {
   row: number;
@@ -30,6 +30,7 @@ export interface BoardState {
   players: Meeple[];
   police: Position[];
   grannies: Position[];
+  puppies: Position[]; // Added puppies array
   exits: Position[];
   jailedPlayers: Meeple[]; // New property to track jailed players
   landmarks: {
@@ -48,6 +49,7 @@ export interface BoardState {
   winner: Team | null;
   turnCount: number;
   policeChains: Position[][]; // Added to track chains of police
+  immobilizedPlayers: string[]; // Track players who can't move due to puppies
 }
 
 export type GameAction = 
