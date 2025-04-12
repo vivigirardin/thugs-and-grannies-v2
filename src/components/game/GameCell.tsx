@@ -92,7 +92,7 @@ const GameCell: React.FC<GameCellProps> = ({
     >
       {cell.type === "exit" && <LogOut className="w-6 h-6 text-white" />}
       {cell.type === "police" && (
-        <div className="text-xs font-bold">👮</div>
+        <div className="text-xs font-bold police-icon">👮</div>
       )}
       {cell.type === "granny" && (
         <div className="text-xs font-bold">👵</div>

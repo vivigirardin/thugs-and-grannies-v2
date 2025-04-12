@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useReducer } from "react";
 import { BoardState, GameAction, Position, Team, Square, Meeple } from "@/types/game";
 import { toast } from "@/hooks/use-toast";
@@ -781,7 +780,7 @@ const gameReducer = (state: BoardState, action: GameAction): BoardState => {
           toast({
             title: "Player Escaped!",
             description: `Your ${selectedPlayer.team} player successfully escaped!`,
-            variant: "success"
+            variant: "default"
           });
         }
       }

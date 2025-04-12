@@ -59,6 +59,10 @@
 
 .bg-game-police {
   background-color: #2b6cb0;
+  /* Make police cells larger and more visible */
+  transform: scale(1.1);
+  box-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
+  z-index: 5;
 }
 
 .bg-game-granny {
@@ -67,4 +71,12 @@
 
 .bg-game-board {
   background-color: #1a202c;
+}
+
+/* Police officer icon styles */
+.police-icon {
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: white;
+  filter: drop-shadow(0px 0px 2px rgba(0,0,0,0.7));
 }
