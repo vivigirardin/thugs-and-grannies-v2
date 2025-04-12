@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useReducer } from "react";
 import { BoardState, GameAction, Position, Team, Square, Meeple } from "@/types/game";
 import { toast } from "@/hooks/use-toast";
@@ -350,23 +349,7 @@ const checkForPlayerCapture = (state: BoardState, newPolicePositions: Position[]
 const addNewPolice = (state: BoardState): BoardState => {
   const newState = { ...state };
   
-  // Find a random empty cell that's not an exit or already occupied by players, police, or grannies
-  const emptyCells: Position[] = [];
-  
-  for (let row = 0; row < BOARD_SIZE; row++) {
-    for (let col = 0; col < BOARD_SIZE; col++) {
-      const cell = state.cells[row][col];
-      if (cell.type === "path" && !cell.occupied) {
-        emptyCells.push({ row, col });
-      }
-    }
-  }
-  
-  if (emptyCells.length === 0) {
-    return state; // No empty cells to add police
-  }
-  
-  // Add 3 new police officers to each existing chain
+  // Find empty cells for expanding each police chain
   const updatedChains = [...state.policeChains];
   const newPolicePositions: Position[] = [];
   
@@ -376,7 +359,7 @@ const addNewPolice = (state: BoardState): BoardState => {
     // Find the last officer in the chain
     const lastOfficer = chain[chain.length - 1];
     
-    // Try to find 3 adjacent cells to add new officers
+    // Try to find adjacent cells to add new officers
     const adjacentCells: Position[] = [];
     const potentialAdjacent = [
       { row: lastOfficer.row - 1, col: lastOfficer.col }, // up
