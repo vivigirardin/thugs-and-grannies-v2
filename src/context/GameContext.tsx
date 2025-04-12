@@ -295,7 +295,7 @@ const generateInitialBoard = (teams: Team[]): BoardState => {
   state.gameStatus = "playing";
   state.turnCount = 0;
   state.activeMeeple = null;
-  state.diceValue = 0; // Set to 0 so the first player can roll the dice
+  state.diceValue = 0; // Set to 0 so the first player can roll dice
   
   return state;
 };
@@ -941,10 +941,15 @@ const gameReducer = (state: BoardState, action: GameAction): BoardState => {
       return newState;
     }
       
-    case "START_GAME":
-      return generateInitialBoard(action.teams);
+    case "START_GAME": {
+      const newState = generateInitialBoard(action.teams);
+      return {
+        ...newState,
+        diceValue: 0 // Explicitly ensure dice is 0 so first player can roll
+      };
+    }
       
-    case "RESET_GAME":
+    case "RESET_GAME": {
       return {
         ...initialState,
         cells: Array(BOARD_SIZE).fill(null).map((_, rowIndex) => 
@@ -955,6 +960,7 @@ const gameReducer = (state: BoardState, action: GameAction): BoardState => {
           }))
         ),
       };
+    }
       
     case "PLAYER_CAUGHT": {
       const { playerId } = action;
