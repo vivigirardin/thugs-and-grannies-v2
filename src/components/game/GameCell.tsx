@@ -1,11 +1,11 @@
 
 import React from "react";
-import { Cell } from "@/types/game";
+import { Square } from "@/types/game";
 import { useGame } from "@/context/GameContext";
 import { Shield, User, LogOut, CircleDot, Building, Library, School, Building2, DoorOpen } from "lucide-react";
 
 interface GameCellProps {
-  cell: Cell;
+  cell: Square;
   onClick: () => void;
   isValidMove: boolean;
   isSelected?: boolean;

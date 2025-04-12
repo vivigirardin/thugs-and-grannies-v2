@@ -8,7 +8,7 @@ export interface Position {
   col: number;
 }
 
-export interface Player {
+export interface Meeple {
   id: string;
   team: Team;
   position: Position;
@@ -16,7 +16,7 @@ export interface Player {
   arrested: boolean;
 }
 
-export interface Cell {
+export interface Square {
   type: CellType;
   position: Position;
   occupied: boolean;
@@ -26,12 +26,12 @@ export interface Cell {
 }
 
 export interface BoardState {
-  cells: Cell[][];
-  players: Player[];
+  cells: Square[][];
+  players: Meeple[];
   police: Position[];
   grannies: Position[];
   exits: Position[];
-  jailedPlayers: Player[]; // New property to track jailed players
+  jailedPlayers: Meeple[]; // New property to track jailed players
   landmarks: {
     city: Position[];
     library: Position[];

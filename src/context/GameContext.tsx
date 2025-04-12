@@ -1,5 +1,6 @@
+
 import React, { createContext, useContext, useReducer } from "react";
-import { BoardState, GameAction, Position, Team } from "@/types/game";
+import { BoardState, GameAction, Position, Team, Square, Meeple } from "@/types/game";
 import { toast } from "@/hooks/use-toast";
 
 // Initial board size
@@ -48,7 +49,7 @@ const landmarks = [
 ];
 
 // Function to find suitable locations for building entrances
-const findEntranceLocations = (buildingType: string, buildingPositions: Position[], cells: Cell[][]): Position[] => {
+const findEntranceLocations = (buildingType: string, buildingPositions: Position[], cells: Square[][]): Position[] => {
   // Find edges of the building that are adjacent to path cells
   const potentialEntrances: Position[] = [];
   
@@ -499,12 +500,12 @@ const movePolice = (state: BoardState): BoardState => {
   const newState = { ...state };
   const newCells = JSON.parse(JSON.stringify(state.cells)); // Deep copy
   const newPolicePositions: Position[] = [];
-  const playersCaught: Player[] = [];
+  const playersCaught: Meeple[] = [];
   
   // For each police officer, try to move toward the nearest player
   state.police.forEach(police => {
     // Find closest player that isn't arrested or escaped
-    let closestPlayer: Player | null = null;
+    let closestPlayer: Meeple | null = null;
     let minDistance = Infinity;
     
     state.players.forEach(player => {

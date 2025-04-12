@@ -1,29 +1,70 @@
 
-/* Dice roll animation */
 @keyframes dice-roll {
-  0% { transform: rotateX(0deg) rotateY(0deg) rotateZ(0deg); }
-  25% { transform: rotateX(180deg) rotateY(90deg) rotateZ(45deg); }
-  50% { transform: rotateX(360deg) rotateY(180deg) rotateZ(90deg); }
-  75% { transform: rotateX(180deg) rotateY(270deg) rotateZ(135deg); }
-  100% { transform: rotateX(360deg) rotateY(360deg) rotateZ(180deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+  20% {
+    transform: rotate(90deg);
+  }
+  40% {
+    transform: rotate(180deg);
+  }
+  60% {
+    transform: rotate(270deg);
+  }
+  80% {
+    transform: rotate(360deg);
+  }
+  100% {
+    transform: rotate(0deg);
+  }
 }
 
-/* Animation classes */
 .animate-dice-roll {
   animation: dice-roll 0.5s ease-in-out;
 }
 
-.animate-fade-in {
-  animation: fade-in 0.3s ease-out;
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
-@keyframes fade-in {
-  0% {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  100% {
-    opacity: 1;
-    transform: translateY(0);
-  }
+.animate-fade-in {
+  animation: fade-in 0.3s ease-in-out;
+}
+
+.bg-game-creeps {
+  background-color: #e53e3e;
+}
+
+.bg-game-italian {
+  background-color: #38a169;
+}
+
+.bg-game-politicians {
+  background-color: #3182ce;
+}
+
+.bg-game-japanese {
+  background-color: #d69e2e;
+}
+
+.bg-game-path {
+  background-color: #e2e8f0;
+}
+
+.bg-game-exit {
+  background-color: #38a169;
+}
+
+.bg-game-police {
+  background-color: #2b6cb0;
+}
+
+.bg-game-granny {
+  background-color: #d53f8c;
+}
+
+.bg-game-board {
+  background-color: #1a202c;
 }
