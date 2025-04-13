@@ -1,4 +1,3 @@
-
 @keyframes dice-roll {
   0% {
     transform: rotate(0deg);
@@ -111,5 +110,50 @@
   
   .bg-game-police, .bg-game-granny, .bg-game-puppy {
     transform: scale(1.05);
+  }
+}
+
+/* Add styles for escaped meeples section */
+.escaped-meeples {
+  margin-top: 1rem;
+  padding: 0.75rem;
+  background-color: #4ade80;
+  border-radius: 0.5rem;
+  width: 100%;
+  max-width: xl;
+}
+
+.winner-badge {
+  background-color: gold;
+  color: black;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+  font-weight: bold;
+  margin-left: 0.5rem;
+  font-size: 0.75rem;
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    opacity: 0.7;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0.7;
+  }
+}
+
+/* Mobile specific styles */
+@media (max-width: 768px) {
+  .escaped-meeples {
+    padding: 0.5rem;
+  }
+  
+  .winner-badge {
+    padding: 0.2rem 0.4rem;
+    font-size: 0.7rem;
   }
 }

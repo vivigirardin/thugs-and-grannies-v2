@@ -357,7 +357,8 @@ const addNewPolice = (state: BoardState): BoardState => {
       if (pos.row >= 0 && pos.row < BOARD_SIZE && 
           pos.col >= 0 && pos.col < BOARD_SIZE &&
           state.cells[pos.row][pos.col].type === "path" &&
-          !state.cells[pos.row][pos.col].occupied) {
+          !state.cells[pos.row][pos.col].occupied &&
+          !state.exits.some(exit => exit.row === pos.row && exit.col === pos.col)) {
         adjacentCells.push(pos);
       }
     });
@@ -367,7 +368,8 @@ const addNewPolice = (state: BoardState): BoardState => {
       for (let r = Math.max(0, lastOfficer.row - 2); r <= Math.min(BOARD_SIZE - 1, lastOfficer.row + 2); r++) {
         for (let c = Math.max(0, lastOfficer.col - 2); c <= Math.min(BOARD_SIZE - 1, lastOfficer.col + 2); c++) {
           if (r !== lastOfficer.row || c !== lastOfficer.col) {
-            if (state.cells[r][c].type === "path" && !state.cells[r][c].occupied) {
+            if (state.cells[r][c].type === "path" && !state.cells[r][c].occupied &&
+                !state.exits.some(exit => exit.row === r && exit.col === c)) {
               nearbyPositions.push({ row: r, col: c });
             }
           }
@@ -538,6 +540,7 @@ const movePolice = (state: BoardState): BoardState => {
         pos.row >= 0 && pos.row < BOARD_SIZE && 
         pos.col >= 0 && pos.col < BOARD_SIZE &&
         newCells[pos.row][pos.col].type !== "entrance" &&
+        newCells[pos.row][pos.col].type !== "exit" &&
         !newState.police.some(p => p.row === pos.row && p.col === pos.col) &&
         !newPolicePositions.some(p => p.row === pos.row && p.col === pos.col)
       );
@@ -905,8 +908,18 @@ const gameReducer = (state: BoardState, action: GameAction): BoardState => {
           if (count > maxEscaped) {
             maxEscaped = count;
             winner = team as Team;
+          } else if (count === maxEscaped && maxEscaped > 0) {
+            winner = winner || team as Team;
           }
         });
+        
+        if (winner) {
+          toast({
+            title: "Game Over!",
+            description: `The ${winner.charAt(0).toUpperCase() + winner.slice(1)} team wins with ${escapedCounts[winner]} escaped meeples!`,
+            variant: "default"
+          });
+        }
       }
       
       return {
