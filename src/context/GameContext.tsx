@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useReducer } from "react";
 import { BoardState, GameAction, Position, Team, Square, Meeple, Card, CardType } from "@/types/game";
 import { toast } from "@/hooks/use-toast";
@@ -1105,7 +1104,14 @@ const gameReducer = (state: BoardState, action: GameAction): BoardState => {
     }
       
     case "NEXT_TURN": {
-      // Reset active effects except skipped players
+      let newState = { 
+        ...state,
+        activeMeeple: null,
+        diceValue: 0,
+        turnCount: state.turnCount + 1,
+        canUndo: false,
+      };
+      
       const resetActiveEffects = {
         policeIgnore: [],
         grannyIgnore: [],
@@ -1114,78 +1120,56 @@ const gameReducer = (state: BoardState, action: GameAction): BoardState => {
         moveDiagonally: null,
         puppyImmunity: [],
         policeMoveLimited: false,
-        skippedPlayers: [...state.cards.activeEffects.skippedPlayers], // Make a copy to avoid reference issues
+        skippedPlayers: [...state.cards.activeEffects.skippedPlayers],
       };
       
-      let newState = { 
-        ...state,
-        activeMeeple: null,
-        diceValue: 0,
-        cards: {
-          ...state.cards,
-          activeEffects: resetActiveEffects,
-          justDrawn: null,
-        },
-        turnCount: state.turnCount + 1,
-        canUndo: false,
-      };
-      
-      // Calculate the next player index
       let nextPlayerIndex = (state.currentPlayer + 1) % state.players.length;
       
-      // Loop to find the next valid player (not arrested, not escaped, not skipped)
       let loopCount = 0;
-      const maxLoops = state.players.length * 2; // Ensure we don't get stuck in an infinite loop
+      const maxLoops = state.players.length * 2;
       
       while (loopCount < maxLoops) {
         const nextPlayer = state.players[nextPlayerIndex];
         
-        // Skip if player doesn't exist (safety check)
         if (!nextPlayer) {
           nextPlayerIndex = (nextPlayerIndex + 1) % state.players.length;
           loopCount++;
           continue;
         }
         
-        // Check if the player is skipped
         const isSkipped = resetActiveEffects.skippedPlayers.includes(nextPlayer.id);
         
-        // If player is not arrested, not escaped, and not skipped, we found our next player
         if (!nextPlayer.arrested && !nextPlayer.escaped && !isSkipped) {
           break;
         }
         
-        // If this player should be skipped but is in the skipped list, remove them for next round
         if (isSkipped) {
           resetActiveEffects.skippedPlayers = resetActiveEffects.skippedPlayers.filter(
             id => id !== nextPlayer.id
           );
         }
         
-        // Move to the next player
         nextPlayerIndex = (nextPlayerIndex + 1) % state.players.length;
         loopCount++;
         
-        // If we've checked all players and found none valid, break to avoid infinite loop
         if (loopCount >= maxLoops) {
-          // Game might be in an unwinnable state - find any non-arrested player
           const anyValidIndex = state.players.findIndex(p => !p.arrested && !p.escaped);
           if (anyValidIndex !== -1) {
             nextPlayerIndex = anyValidIndex;
           } else {
-            nextPlayerIndex = 0; // Fallback
+            nextPlayerIndex = 0;
           }
           break;
         }
       }
       
-      // Update the current player index
       return {
         ...newState,
         currentPlayer: nextPlayerIndex,
         cards: {
           ...newState.cards,
           activeEffects: resetActiveEffects,
+          justDrawn: null,
         },
       };
     }
