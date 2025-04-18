@@ -15,16 +15,40 @@ const GameRules: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
 
   const rulesContent = (
-    <div className="space-y-2 text-left">
-      <h3 className={`font-bold ${isMobile ? "text-sm" : "text-base"}`}>How to Play:</h3>
-      <ul className={`list-disc pl-5 space-y-1 ${isMobile ? "text-xs" : "text-sm"}`}>
-        <li>Roll the dice to move one of your team members.</li>
-        <li>Move the exact number of spaces shown on the dice.</li>
-        <li>Watch out for the expanding police chains!</li>
-        <li>Grannies will slow you down - avoid them if possible.</li>
-        <li>Get your team to the exits before they get caught.</li>
-        <li>If caught by police, your thug goes to jail.</li>
-      </ul>
+    <div className="space-y-4 text-left">
+      <div className="space-y-2">
+        <h3 className={`font-bold ${isMobile ? "text-sm" : "text-base"}`}>Goal:</h3>
+        <p className={`${isMobile ? "text-xs" : "text-sm"}`}>
+          Get as many of your gang members to the exits as possible. The team with the most escaped members wins!
+        </p>
+      </div>
+
+      <div className="space-y-2">
+        <h3 className={`font-bold ${isMobile ? "text-sm" : "text-base"}`}>How to Play:</h3>
+        <ul className={`list-disc pl-5 space-y-2 ${isMobile ? "text-xs" : "text-sm"}`}>
+          <li>Select your team: Creeps (red), Italian (green), Politicians (blue), or Japanese (yellow).</li>
+          <li>Roll the dice to move one of your team members - you must move the exact number shown.</li>
+          <li>Get your members to any exit square (green) to escape successfully.</li>
+        </ul>
+      </div>
+
+      <div className="space-y-2">
+        <h3 className={`font-bold ${isMobile ? "text-sm" : "text-base"}`}>Watch Out For:</h3>
+        <ul className={`list-disc pl-5 space-y-2 ${isMobile ? "text-xs" : "text-sm"}`}>
+          <li><span className="font-semibold">Police (Blue):</span> Start in the center and expand outward each round. If they catch you, it's straight to jail!</li>
+          <li><span className="font-semibold">Grannies (Pink):</span> You must go around them - no passing through granny squares!</li>
+          <li><span className="font-semibold">Puppies (Purple):</span> Move randomly each round. If your member is next to a puppy, they're distracted and can't move that turn!</li>
+        </ul>
+      </div>
+
+      <div className="space-y-2">
+        <h3 className={`font-bold ${isMobile ? "text-sm" : "text-base"}`}>Tips:</h3>
+        <ul className={`list-disc pl-5 space-y-2 ${isMobile ? "text-xs" : "text-sm"}`}>
+          <li>Plan your escape route carefully to avoid getting trapped by police.</li>
+          <li>Keep track of your escaped members - they're counted at the top of the board.</li>
+          <li>Sometimes waiting a turn is better than moving into a risky position.</li>
+        </ul>
+      </div>
     </div>
   );
 
