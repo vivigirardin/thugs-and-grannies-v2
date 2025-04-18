@@ -11,6 +11,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { toast } from "@/hooks/use-toast";
 
 const GameControls: React.FC = () => {
   const { state, dispatch } = useGame();
@@ -39,6 +40,14 @@ const GameControls: React.FC = () => {
 
   const handleEndTurn = () => {
     if (state.gameStatus !== "playing") return;
+    
+    // Add a toast to confirm turn end
+    toast({
+      title: "Turn Ended",
+      description: `${currentTeam}'s turn has ended.`,
+    });
+    
+    // Dispatch the NEXT_TURN action
     dispatch({ type: "NEXT_TURN" });
   };
 

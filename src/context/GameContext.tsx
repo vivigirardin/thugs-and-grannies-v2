@@ -542,7 +542,9 @@ const drawCard = (state: BoardState): BoardState => {
           name: "Empty Deck", 
           description: "No more cards left in the deck!", 
           type: "empty" as CardType,
-          used: false 
+          used: false,
+          flavor: "The deck is empty",
+          icon: "alert-circle"
         }
       }
     };
@@ -1128,11 +1130,13 @@ const gameReducer = (state: BoardState, action: GameAction): BoardState => {
         skippedPlayers: [...state.cards.activeEffects.skippedPlayers],
       };
       
+      // Make sure we're starting from the current player index
       let nextPlayerIndex = (state.currentPlayer + 1) % state.players.length;
       
       let loopCount = 0;
-      const maxLoops = state.players.length * 2;
+      const maxLoops = state.players.length * 2; // Prevent infinite loops
       
+      // Find the next valid player
       while (loopCount < maxLoops) {
         const nextPlayer = state.players[nextPlayerIndex];
         
@@ -1145,10 +1149,11 @@ const gameReducer = (state: BoardState, action: GameAction): BoardState => {
         const isSkipped = resetActiveEffects.skippedPlayers.includes(nextPlayer.id);
         
         if (!nextPlayer.arrested && !nextPlayer.escaped && !isSkipped) {
-          break;
+          break; // Found a valid player
         }
         
         if (isSkipped) {
+          // Remove this player from the skipped list for future turns
           resetActiveEffects.skippedPlayers = resetActiveEffects.skippedPlayers.filter(
             id => id !== nextPlayer.id
           );
@@ -1158,6 +1163,7 @@ const gameReducer = (state: BoardState, action: GameAction): BoardState => {
         loopCount++;
         
         if (loopCount >= maxLoops) {
+          // Fallback if we can't find any valid player
           const anyValidIndex = state.players.findIndex(p => !p.arrested && !p.escaped);
           if (anyValidIndex !== -1) {
             nextPlayerIndex = anyValidIndex;
@@ -1174,7 +1180,7 @@ const gameReducer = (state: BoardState, action: GameAction): BoardState => {
         cards: {
           ...newState.cards,
           activeEffects: resetActiveEffects,
-          justDrawn: null,
+          justDrawn: null, // Reset the just drawn card on turn end
         },
       };
     }
