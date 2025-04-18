@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useReducer } from "react";
 import { BoardState, GameAction, Position, Team, Square, Meeple, Card, CardType } from "@/types/game";
 import { toast } from "@/hooks/use-toast";
@@ -539,17 +540,17 @@ const drawCard = (state: BoardState): BoardState => {
     return state;
   }
   
-  const [cardDrawn, ...remainingDeck] = state.cards.deck;
+  const [newCardDrawn, ...remainingDeck] = state.cards.deck;
   
   newState.cards = {
     ...state.cards,
     deck: remainingDeck,
-    justDrawn: cardDrawn,
+    justDrawn: newCardDrawn,
   };
   
   toast({
     title: "Card Drawn",
-    description: `You drew: ${cardDrawn.name}`,
+    description: `You drew: ${newCardDrawn.name}`,
   });
   
   return newState;
@@ -561,10 +562,10 @@ const keepCard = (state: BoardState): BoardState => {
   }
   
   const currentTeam = state.players[state.currentPlayer].team;
-  const cardDrawn = state.cards.justDrawn;
+  const newCardDrawn = state.cards.justDrawn;
   
   const newHands = { ...state.cards.playerHands };
-  newHands[currentTeam] = [...newHands[currentTeam], cardDrawn];
+  newHands[currentTeam] = [...newHands[currentTeam], newCardDrawn];
   
   return {
     ...state,
@@ -1146,10 +1147,11 @@ const gameReducer = (state: BoardState, action: GameAction): BoardState => {
           continue;
         }
         
+        // Check if the player is skipped
         const isSkipped = resetActiveEffects.skippedPlayers.includes(nextPlayer.id);
         
+        // If player is not arrested, not escaped, and not skipped, we found our next player
         if (!nextPlayer.arrested && !nextPlayer.escaped && !isSkipped) {
-          // Found a valid player
           break;
         }
         
@@ -1160,6 +1162,7 @@ const gameReducer = (state: BoardState, action: GameAction): BoardState => {
           );
         }
         
+        // Move to the next player
         nextPlayerIndex = (nextPlayerIndex + 1) % state.players.length;
         loopCount++;
         
@@ -1216,15 +1219,15 @@ const gameReducer = (state: BoardState, action: GameAction): BoardState => {
       }
       
       const cardsToDraw = [...state.cards.deck];
-      const cardDrawn = cardsToDraw.shift();
+      const newCardDrawn = cardsToDraw.shift();
       
-      if (!cardDrawn) {
+      if (!newCardDrawn) {
         return state;
       }
       
       toast({
         title: "Card Drawn",
-        description: `You drew: ${cardDrawn.name}`,
+        description: `You drew: ${newCardDrawn.name}`,
       });
       
       return {
@@ -1232,7 +1235,7 @@ const gameReducer = (state: BoardState, action: GameAction): BoardState => {
         cards: {
           ...state.cards,
           deck: cardsToDraw,
-          justDrawn: cardDrawn,
+          justDrawn: newCardDrawn,
         },
       };
     }
@@ -1243,10 +1246,10 @@ const gameReducer = (state: BoardState, action: GameAction): BoardState => {
       }
       
       const currentTeam = state.players[state.currentPlayer].team;
-      const keptCard = state.cards.justDrawn;
+      const newCardDrawn = state.cards.justDrawn;
       
       const newHands = { ...state.cards.playerHands };
-      newHands[currentTeam] = [...newHands[currentTeam], keptCard];
+      newHands[currentTeam] = [...newHands[currentTeam], newCardDrawn];
       
       return {
         ...state,

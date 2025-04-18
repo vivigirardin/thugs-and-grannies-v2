@@ -16,11 +16,13 @@ const GameContainer: React.FC = () => {
     <GameProvider>
       <div className={`flex ${isMobile ? "flex-col" : "flex-col"} items-center gap-4 max-w-full overflow-hidden`}>
         <div className={`${isMobile ? "w-full" : ""} overflow-auto max-w-full`}>
-          <GameControls />
           <GameBoard />
         </div>
         <div className={`${isMobile ? "w-full" : ""} mt-4 mb-4`}>
           <CardManager />
+        </div>
+        <div className={`${isMobile ? "w-full" : ""} mt-4 mb-2`}>
+          <GameControls />
         </div>
         <div className={`${isMobile ? "w-full" : ""} mt-2`}>
           <TeamSelector />
