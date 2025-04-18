@@ -19,7 +19,7 @@ const GameContainer: React.FC = () => {
           <GameControls />
           <GameBoard />
         </div>
-        <div className={`${isMobile ? "w-full" : ""} mt-2`}>
+        <div className={`${isMobile ? "w-full" : ""} mt-4 mb-4`}>
           <CardManager />
         </div>
         <div className={`${isMobile ? "w-full" : ""} mt-2`}>

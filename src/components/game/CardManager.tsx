@@ -29,7 +29,15 @@ const CardManager: React.FC = () => {
   const [targetPuppy, setTargetPuppy] = useState<number | null>(null);
 
   const handleDrawCard = () => {
-    console.log("Draw card button clicked");
+    // Check if player can draw a card (can only draw when not in movement phase)
+    if (state.diceValue > 0) {
+      toast({
+        title: "Can't Draw Now",
+        description: "You need to complete your movement first.",
+        variant: "destructive",
+      });
+      return;
+    }
     
     // Check if player already has a card drawn this turn
     if (state.cards.justDrawn) {
@@ -41,21 +49,21 @@ const CardManager: React.FC = () => {
       return;
     }
     
-    // Check if player can draw a card (can only draw when not in movement phase)
+    // Dispatch the draw card action
+    dispatch({ type: "DRAW_CARD" });
+  };
+
+  const handleUseCard = (card: Card) => {
+    // Check if player can use a card (can only use when not in movement phase)
     if (state.diceValue > 0) {
       toast({
-        title: "Can't Draw Now",
+        title: "Can't Use Card Now",
         description: "You need to complete your movement first.",
         variant: "destructive",
       });
       return;
     }
     
-    // Dispatch the draw card action
-    dispatch({ type: "DRAW_CARD" });
-  };
-
-  const handleUseCard = (card: Card) => {
     setSelectedCard(card);
 
     // Cards that need target selection
@@ -79,6 +87,15 @@ const CardManager: React.FC = () => {
   };
 
   const handleTradeCard = (card: Card) => {
+    if (state.diceValue > 0) {
+      toast({
+        title: "Can't Trade Now",
+        description: "You need to complete your movement first.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     setSelectedCard(card);
     setIsTradeDialogOpen(true);
   };
@@ -115,7 +132,6 @@ const CardManager: React.FC = () => {
         break;
       case "switcheroo":
         // For switcheroo, first select one meeple, then another
-        // For simplicity, in the UI we'll just use the card and the game logic will handle selection
         dispatch({ type: "USE_CARD", cardId: selectedCard.id });
         break;
       default:
@@ -131,12 +147,12 @@ const CardManager: React.FC = () => {
     if (!state.cards.justDrawn) return null;
 
     return (
-      <div className="flex flex-col items-center mb-4">
+      <div className="flex flex-col items-center mb-4 p-3 bg-amber-50 border border-amber-200 rounded">
         <h3 className="text-center mb-2 font-bold">Card Drawn</h3>
         <GameCard card={state.cards.justDrawn} />
-        <div className="flex gap-2 mt-2">
-          <Button size="sm" onClick={handleKeepCard}>Keep</Button>
-          <Button size="sm" onClick={() => handleUseCard(state.cards.justDrawn!)}>Use</Button>
+        <div className="flex gap-2 mt-4">
+          <Button size="sm" onClick={handleKeepCard}>Keep Card</Button>
+          <Button size="sm" onClick={() => handleUseCard(state.cards.justDrawn!)}>Use Now</Button>
         </div>
       </div>
     );
@@ -179,7 +195,7 @@ const CardManager: React.FC = () => {
           {currentHand.length === 0 ? (
             <p className="text-gray-500 text-center py-2">No cards</p>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
               {currentHand.map(card => (
                 <div key={card.id} className="flex flex-col items-center">
                   <GameCard 
@@ -187,7 +203,7 @@ const CardManager: React.FC = () => {
                     disabled={card.used || state.diceValue > 0} 
                     onClick={() => !card.used && state.diceValue === 0 ? handleUseCard(card) : null} 
                   />
-                  <div className="flex gap-1 mt-1">
+                  <div className="flex gap-2 mt-2">
                     <Button 
                       size="sm" 
                       variant="outline" 

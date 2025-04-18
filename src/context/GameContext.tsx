@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useReducer } from "react";
 import { BoardState, GameAction, Position, Team, Square, Meeple, Card, CardType } from "@/types/game";
 import { toast } from "@/hooks/use-toast";
@@ -32,7 +31,7 @@ const CARDS: Omit<Card, 'id' | 'used'>[] = [
   { 
     type: "distraction", 
     name: "Distraction", 
-    description: "Choose one puppy – it doesn’t distract anyone this round.", 
+    description: "Choose one puppy – it doesn't distract anyone this round.", 
     flavor: "Squirrel!",
     icon: "dog"
   },
@@ -1105,7 +1104,7 @@ const gameReducer = (state: BoardState, action: GameAction): BoardState => {
     }
       
     case "NEXT_TURN": {
-      // Fixed turn progression logic
+      // Reset active effects except skipped players
       const resetActiveEffects = {
         policeIgnore: [],
         grannyIgnore: [],
@@ -1114,7 +1113,7 @@ const gameReducer = (state: BoardState, action: GameAction): BoardState => {
         moveDiagonally: null,
         puppyImmunity: [],
         policeMoveLimited: false,
-        skippedPlayers: state.cards.activeEffects.skippedPlayers,
+        skippedPlayers: [...state.cards.activeEffects.skippedPlayers], // Make a copy to avoid reference issues
       };
       
       let newState = { 
@@ -1135,10 +1134,18 @@ const gameReducer = (state: BoardState, action: GameAction): BoardState => {
       
       // Loop to find the next valid player (not arrested, not escaped, not skipped)
       let loopCount = 0;
-      const activeTeams = new Set(state.players.map(p => p.team));
+      const maxLoops = state.players.length * 2; // Ensure we don't get stuck in an infinite loop
       
-      while (loopCount < state.players.length) {
+      while (loopCount < maxLoops) {
         const nextPlayer = state.players[nextPlayerIndex];
+        
+        // Skip if player doesn't exist (safety check)
+        if (!nextPlayer) {
+          nextPlayerIndex = (nextPlayerIndex + 1) % state.players.length;
+          loopCount++;
+          continue;
+        }
+        
         const isSkipped = resetActiveEffects.skippedPlayers.includes(nextPlayer.id);
         
         if (!nextPlayer.arrested && !nextPlayer.escaped && !isSkipped) {
@@ -1157,10 +1164,14 @@ const gameReducer = (state: BoardState, action: GameAction): BoardState => {
         loopCount++;
         
         // If we've checked all players and found none valid, break to avoid infinite loop
-        if (loopCount >= state.players.length) {
+        if (loopCount >= maxLoops) {
           // Game might be in an unwinnable state - find any non-arrested player
-          nextPlayerIndex = state.players.findIndex(p => !p.arrested && !p.escaped);
-          if (nextPlayerIndex === -1) nextPlayerIndex = 0; // Fallback
+          const anyValidIndex = state.players.findIndex(p => !p.arrested && !p.escaped);
+          if (anyValidIndex !== -1) {
+            nextPlayerIndex = anyValidIndex;
+          } else {
+            nextPlayerIndex = 0; // Fallback
+          }
           break;
         }
       }
@@ -1171,10 +1182,7 @@ const gameReducer = (state: BoardState, action: GameAction): BoardState => {
         currentPlayer: nextPlayerIndex,
         cards: {
           ...newState.cards,
-          activeEffects: {
-            ...newState.cards.activeEffects,
-            skippedPlayers: resetActiveEffects.skippedPlayers,
-          },
+          activeEffects: resetActiveEffects,
         },
       };
     }
@@ -1188,17 +1196,31 @@ const gameReducer = (state: BoardState, action: GameAction): BoardState => {
       }
       return state;
       
-    case "DRAW_CARD":
-      console.log("DRAW_CARD action received");
-      if (state.cards.deck.length === 0) {
+    case "DRAW_CARD": {
+      if (state.cards.justDrawn) {
         toast({
-          title: "Deck Empty",
-          description: "No more cards left in the deck!",
+          title: "Card Already Drawn",
+          description: "You already drew a card this turn.",
+          variant: "destructive",
         });
         return state;
       }
       
-      const [cardDrawn, ...remainingDeck] = state.cards.deck;
+      if (state.cards.deck.length === 0) {
+        toast({
+          title: "Deck Empty",
+          description: "No more cards left in the deck!",
+          variant: "destructive",
+        });
+        return state;
+      }
+      
+      const cardsToDraw = [...state.cards.deck];
+      const cardDrawn = cardsToDraw.shift();
+      
+      if (!cardDrawn) {
+        return state;
+      }
       
       toast({
         title: "Card Drawn",
@@ -1209,12 +1231,13 @@ const gameReducer = (state: BoardState, action: GameAction): BoardState => {
         ...state,
         cards: {
           ...state.cards,
-          deck: remainingDeck,
+          deck: cardsToDraw,
           justDrawn: cardDrawn,
         },
       };
+    }
       
-    case "KEEP_CARD":
+    case "KEEP_CARD": {
       if (!state.cards.justDrawn) {
         return state;
       }
@@ -1233,6 +1256,7 @@ const gameReducer = (state: BoardState, action: GameAction): BoardState => {
           justDrawn: null,
         },
       };
+    }
       
     case "USE_CARD":
       return useCard(state, action.cardId, action.targetId, action.position);
