@@ -1,30 +1,53 @@
 
-import React, { useState } from "react";
+import React from "react";
 import { useGame } from "@/context/GameContext";
 import GameCell from "./GameCell";
-import { Position } from "@/types/game";
+import { Position, Team } from "@/types/game";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Dice1, Dice2, Dice3, Dice4, Dice5, Dice6, SkipForward } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
+import { Trophy } from "lucide-react";
 
 const GameBoard: React.FC = () => {
   const { state, dispatch } = useGame();
-  const { toast } = useToast();
   const currentTeam = state.players[state.currentPlayer]?.team;
   const selectedMeeple = state.activeMeeple 
     ? state.players.find(p => p.id === state.activeMeeple) 
     : null;
-  const [isDiceRolling, setIsDiceRolling] = useState(false);
-  const [showTurnDialog, setShowTurnDialog] = useState(false);
+
+  // Record of escaped meeples by team
+  const escapedMeeplesByTeam = React.useMemo(() => {
+    const escaped: Record<Team, number> = {
+      creeps: 0,
+      italian: 0,
+      politicians: 0,
+      japanese: 0
+    };
+    
+    state.players.forEach(player => {
+      if (player.escaped) {
+        escaped[player.team]++;
+      }
+    });
+    
+    return escaped;
+  }, [state.players]);
+  
+  // Determine the team with most escaped meeples
+  const mostEscapedMeeples = React.useMemo(() => {
+    let maxTeam: Team | null = null;
+    let maxCount = 0;
+    
+    (Object.entries(escapedMeeplesByTeam) as [Team, number][]).forEach(([team, count]) => {
+      if (count > maxCount) {
+        maxCount = count;
+        maxTeam = team;
+      }
+    });
+    
+    return { team: maxTeam, count: maxCount };
+  }, [escapedMeeplesByTeam]);
+
+  const hasEscapedMeeples = Object.values(escapedMeeplesByTeam).some(count => count > 0);
 
   const handleCellClick = (position: Position) => {
     if (state.gameStatus !== "playing") {
@@ -70,6 +93,10 @@ const GameBoard: React.FC = () => {
       return false;
     }
     
+    if (state.immobilizedPlayers.includes(selectedMeeple.id)) {
+      return false;
+    }
+    
     const cell = state.cells[rowIndex][colIndex];
     
     // Special case for entrances - can always use them
@@ -79,13 +106,45 @@ const GameBoard: React.FC = () => {
     
     // Can't move to occupied cells or cells with police or grannies
     if (cell.occupied || cell.type === "police" || cell.type === "granny" || 
-        (cell.type !== "path" && cell.type !== "exit")) {
+        cell.type === "puppy" || (cell.type !== "path" && cell.type !== "exit")) {
       return false;
     }
     
     const dx = Math.abs(rowIndex - selectedMeeple.position.row);
     const dy = Math.abs(colIndex - selectedMeeple.position.col);
-    return dx + dy <= state.diceValue && dx + dy > 0;
+    
+    if (dx + dy > state.diceValue || dx + dy === 0) {
+      return false;
+    }
+    
+    const isHorizontalMove = selectedMeeple.position.row === rowIndex;
+    const isVerticalMove = selectedMeeple.position.col === colIndex;
+    
+    if (isHorizontalMove || isVerticalMove) {
+      if (isHorizontalMove) {
+        const startCol = Math.min(selectedMeeple.position.col, colIndex);
+        const endCol = Math.max(selectedMeeple.position.col, colIndex);
+        const row = rowIndex;
+        
+        for (let col = startCol + 1; col < endCol; col++) {
+          if (state.cells[row][col].type === "granny") {
+            return false;
+          }
+        }
+      } else {
+        const startRow = Math.min(selectedMeeple.position.row, rowIndex);
+        const endRow = Math.max(selectedMeeple.position.row, rowIndex);
+        const col = colIndex;
+        
+        for (let row = startRow + 1; row < endRow; row++) {
+          if (state.cells[row][col].type === "granny") {
+            return false;
+          }
+        }
+      }
+    }
+    
+    return true;
   };
 
   const isSelectableMeeple = (rowIndex: number, colIndex: number) => {
@@ -99,6 +158,11 @@ const GameBoard: React.FC = () => {
     }
     
     const player = state.players.find(p => p.id === cell.occupiedBy);
+    
+    if (player && state.immobilizedPlayers.includes(player.id)) {
+      return false;
+    }
+    
     return player && player.team === currentTeam && !player.arrested && !player.escaped;
   };
 
@@ -133,46 +197,6 @@ const GameBoard: React.FC = () => {
     }
   };
 
-  const renderDice = () => {
-    if (state.diceValue === 0) {
-      return <Dice6 className="w-12 h-12 opacity-50" />;
-    }
-
-    const DiceIcons = [
-      <Dice1 key={1} className="w-12 h-12" />,
-      <Dice2 key={2} className="w-12 h-12" />,
-      <Dice3 key={3} className="w-12 h-12" />,
-      <Dice4 key={4} className="w-12 h-12" />,
-      <Dice5 key={5} className="w-12 h-12" />,
-      <Dice6 key={6} className="w-12 h-12" />
-    ];
-    
-    return DiceIcons[state.diceValue - 1];
-  };
-
-  const handleRollDice = () => {
-    if (state.gameStatus !== "playing") return;
-    setIsDiceRolling(true);
-    
-    // Small delay to show animation before updating state
-    setTimeout(() => {
-      dispatch({ type: "ROLL_DICE" });
-      setIsDiceRolling(false);
-    }, 500);
-  };
-
-  const handleEndTurn = () => {
-    if (state.gameStatus !== "playing") return;
-    dispatch({ type: "NEXT_TURN" });
-    setShowTurnDialog(true);
-  };
-
-  React.useEffect(() => {
-    if (state.gameStatus === "playing" && state.diceValue === 0) {
-      setShowTurnDialog(true);
-    }
-  }, [state.currentPlayer, state.gameStatus]);
-
   return (
     <div className="flex flex-col items-center mb-6 overflow-auto max-w-full relative">
       <div className="bg-game-board p-2 rounded-lg shadow-lg">
@@ -192,68 +216,25 @@ const GameBoard: React.FC = () => {
         </div>
       </div>
 
-      <div className="mt-4 bg-amber-50 p-3 rounded-lg border border-amber-200">
-        <h3 className="font-bold mb-1 text-amber-800">Turn Order:</h3>
-        <ol className="list-decimal text-sm text-amber-700 pl-5">
-          <li>Roll the dice</li>
-          <li>Draw a card OR play a card from your hand</li>
-          <li>Move a meeple (undo if needed)</li>
-          <li>End turn</li>
-        </ol>
-      </div>
-
-      <Dialog open={showTurnDialog} onOpenChange={setShowTurnDialog}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle className="text-center capitalize">
-              {currentTeam}'s Turn
-            </DialogTitle>
-            <DialogDescription className="text-center">
-              Roll the dice to determine how far you can move.
-            </DialogDescription>
-          </DialogHeader>
-          
-          <div className="flex flex-col items-center gap-4 py-4">
-            <div className={`p-4 rounded-full ${getTeamColor(currentTeam || "")}`}>
-              <div className={`${isDiceRolling ? 'animate-dice-roll' : ''}`}>
-                {renderDice()}
-              </div>
-            </div>
-            
-            {state.diceValue === 0 ? (
-              <Button 
-                onClick={handleRollDice}
-                className="w-32"
-              >
-                Roll Dice
-              </Button>
-            ) : (
-              <div className="text-center">
-                <p className="mb-2 text-lg font-medium">You rolled a {state.diceValue}!</p>
-                <p className="text-sm text-gray-600 mb-2">Click a meeple to select it, then click a highlighted cell to move.</p>
-              </div>
-            )}
-
-            <div className="bg-amber-50 p-3 rounded-lg border border-amber-200 w-full mt-2">
-              <h3 className="font-bold mb-1 text-amber-800 text-sm">Turn Order:</h3>
-              <ol className="list-decimal text-sm text-amber-700 pl-5">
-                <li className={state.diceValue ? "line-through opacity-60" : "font-bold"}>Roll the dice</li>
-                <li className={state.cards.justDrawn ? "line-through opacity-60" : ""}>Draw a card OR play a card</li>
-                <li className={state.diceValue === 0 ? "line-through opacity-60" : ""}>Move a meeple</li>
-                <li>End turn</li>
-              </ol>
-            </div>
+      {state.gameStatus === "ended" && state.winner && (
+        <div className="mt-4 p-4 bg-yellow-100 border-2 border-yellow-400 rounded-lg text-center animate-fade-in">
+          <div className="flex items-center justify-center mb-2">
+            <Trophy className="w-6 h-6 text-yellow-500 mr-2" />
+            <h2 className="text-xl font-bold capitalize">{state.winner} Team Wins!</h2>
           </div>
-        </DialogContent>
-      </Dialog>
+          <p className="text-gray-700">
+            With {escapedMeeplesByTeam[state.winner]} escaped meeples
+          </p>
+        </div>
+      )}
 
-      <div className="fixed right-4 top-1/2 transform -translate-y-1/2 z-10 flex flex-col gap-2">
+      <div className="mt-4 flex flex-wrap justify-center gap-2">
         {selectedMeeple && (
           <Button
             onClick={() => dispatch({ type: "DESELECT_MEEPLE" })}
             variant="outline"
-            size="lg"
-            className="flex flex-col items-center gap-1 bg-white shadow-lg"
+            size="sm"
+            className="flex items-center gap-1 bg-white shadow-md"
           >
             <span className="text-xs">Change Meeple</span>
           </Button>
@@ -263,24 +244,45 @@ const GameBoard: React.FC = () => {
           <Button
             onClick={() => dispatch({ type: "UNDO_MOVE" })}
             variant="outline"
-            size="lg"
-            className="flex flex-col items-center gap-1 bg-white shadow-lg"
+            size="sm"
+            className="flex items-center gap-1 bg-white shadow-md"
           >
             <span className="text-xs">Undo Move</span>
           </Button>
         )}
-
-        <Button 
-          onClick={handleEndTurn}
-          variant="outline"
-          size="lg"
-          className="flex flex-col items-center gap-1 bg-white shadow-lg"
-          disabled={state.gameStatus !== "playing"}
-        >
-          <SkipForward className="w-6 h-6" />
-          <span className="text-xs">End Turn</span>
-        </Button>
       </div>
+
+      {Object.values(escapedMeeplesByTeam).some(count => count > 0) && (
+        <div className="escaped-meeples mt-4">
+          <div className="flex items-center mb-2">
+            <div className="w-6 h-6 mr-2 flex items-center justify-center text-white">
+              🏃
+            </div>
+            <h3 className="text-white font-bold">Escaped Meeples</h3>
+          </div>
+          <div className="flex flex-wrap gap-4">
+            {(Object.entries(escapedMeeplesByTeam) as [Team, number][]).map(([team, count]) => {
+              if (count === 0) return null;
+              
+              const isWinner = state.gameStatus === "ended" && team === state.winner;
+              
+              return (
+                <div key={team} className="flex flex-col items-center">
+                  <div className="mb-1 text-xs text-white capitalize flex items-center">
+                    {team}
+                    {isWinner && <span className="winner-badge">Winner!</span>}
+                  </div>
+                  <div className="flex items-center">
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center ${getTeamColor(team)}`}>
+                      {count}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {Object.keys(jailedPlayersByTeam).length > 0 && (
         <div className="mt-6 p-3 bg-gray-800 rounded-lg w-full max-w-xl">
