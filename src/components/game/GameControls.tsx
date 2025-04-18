@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useGame } from "@/context/GameContext";
 import { Button } from "@/components/ui/button";
@@ -19,7 +19,8 @@ const GameControls: React.FC = () => {
   const [showTurnDialog, setShowTurnDialog] = useState(false);
   const currentTeam = state.players[state.currentPlayer]?.team;
 
-  React.useEffect(() => {
+  // Show turn dialog when a new turn starts
+  useEffect(() => {
     if (state.gameStatus === "playing" && state.diceValue === 0) {
       setShowTurnDialog(true);
     }
@@ -39,7 +40,6 @@ const GameControls: React.FC = () => {
   const handleEndTurn = () => {
     if (state.gameStatus !== "playing") return;
     dispatch({ type: "NEXT_TURN" });
-    setShowTurnDialog(true);
   };
 
   const renderDice = () => {
@@ -73,6 +73,14 @@ const GameControls: React.FC = () => {
         return "bg-gray-500 text-white";
     }
   };
+
+  const determineTurnStep = () => {
+    if (state.diceValue === 0) return 1; // Roll dice
+    if (!state.cards.justDrawn && state.diceValue > 0) return 2; // Draw/play card
+    return 3; // Move meeple
+  };
+
+  const currentStep = determineTurnStep();
 
   return (
     <div className={`flex flex-col ${isMobile ? "items-start gap-2" : "items-center gap-4"} mb-4`}>
@@ -129,7 +137,10 @@ const GameControls: React.FC = () => {
             
             {state.diceValue === 0 ? (
               <Button 
-                onClick={handleRollDice}
+                onClick={() => {
+                  handleRollDice();
+                  setShowTurnDialog(false);
+                }}
                 className="w-32"
               >
                 Roll Dice
@@ -144,9 +155,9 @@ const GameControls: React.FC = () => {
             <div className="bg-amber-50 p-3 rounded-lg border border-amber-200 w-full mt-2">
               <h3 className="font-bold mb-1 text-amber-800 text-sm">Turn Order:</h3>
               <ol className="list-decimal text-sm text-amber-700 pl-5">
-                <li className={state.diceValue ? "line-through opacity-60" : "font-bold"}>Roll the dice</li>
-                <li className={state.cards.justDrawn ? "line-through opacity-60" : ""}>Draw a card OR play a card</li>
-                <li className={state.diceValue === 0 ? "opacity-60" : ""}>Move a meeple</li>
+                <li className={currentStep > 1 ? "line-through opacity-60" : "font-bold"}>Roll the dice</li>
+                <li className={currentStep > 2 ? "line-through opacity-60" : currentStep === 2 ? "font-bold" : ""}>Draw a card OR play a card</li>
+                <li className={currentStep === 3 ? "font-bold" : ""}>Move a meeple</li>
                 <li>End turn</li>
               </ol>
             </div>

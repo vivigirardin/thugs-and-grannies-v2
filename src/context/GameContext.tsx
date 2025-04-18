@@ -532,11 +532,20 @@ const drawCard = (state: BoardState): BoardState => {
   const currentTeam = state.players[state.currentPlayer].team;
   
   if (state.cards.deck.length === 0) {
-    toast({
-      title: "Deck Empty",
-      description: "No more cards left in the deck!",
-    });
-    return state;
+    // Don't call toast directly here - will cause React render warning
+    return {
+      ...state,
+      cards: {
+        ...state.cards,
+        justDrawn: { 
+          id: "empty-deck", 
+          name: "Empty Deck", 
+          description: "No more cards left in the deck!", 
+          type: "empty" as CardType,
+          used: false 
+        }
+      }
+    };
   }
   
   const [newCardDrawn, ...remainingDeck] = state.cards.deck;
@@ -547,11 +556,7 @@ const drawCard = (state: BoardState): BoardState => {
     justDrawn: newCardDrawn,
   };
   
-  toast({
-    title: "Card Drawn",
-    description: `You drew: ${newCardDrawn.name}`,
-  });
-  
+  // Don't call toast directly here
   return newState;
 };
 

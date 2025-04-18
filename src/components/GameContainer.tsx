@@ -15,23 +15,23 @@ const GameContainer: React.FC = () => {
   return (
     <GameProvider>
       <div className={`flex ${isMobile ? "flex-col" : "flex-col"} items-center gap-4 max-w-full overflow-hidden`}>
-        {/* The game board only shows the board, not dice or controls */}
-        <div className={`${isMobile ? "w-full" : ""} overflow-auto max-w-full`}>
-          <GameBoard />
-        </div>
-        
         {/* Game controls (Roll Dice) comes first in the turn order */}
-        <div className={`${isMobile ? "w-full" : ""} mt-4 mb-2`}>
+        <div className={`${isMobile ? "w-full" : ""} mt-2 mb-2`}>
           <GameControls />
         </div>
         
         {/* Card Manager (Draw/Play Card) comes second in the turn order */}
-        <div className={`${isMobile ? "w-full" : ""} mt-4 mb-4`}>
+        <div className={`${isMobile ? "w-full" : ""} mt-2 mb-4`}>
           <CardManager />
         </div>
         
+        {/* The game board shows the board and handles meeple movement */}
+        <div className={`${isMobile ? "w-full" : ""} overflow-auto max-w-full`}>
+          <GameBoard />
+        </div>
+        
         {/* Team selector and rules last */}
-        <div className={`${isMobile ? "w-full" : ""} mt-2`}>
+        <div className={`${isMobile ? "w-full" : ""} mt-4`}>
           <TeamSelector />
         </div>
         <div className={`${isMobile ? "w-full" : ""} mt-2`}>
