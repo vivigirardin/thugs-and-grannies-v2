@@ -50,7 +50,7 @@ const GameBoard: React.FC = () => {
       return;
     }
 
-    // If dice is rolled but no meeple is selected, check if there's a meeple of the current team to select
+    // If dice is rolled but no meeple is selected, check if there's a meeple to select
     if (state.diceValue > 0) {
       const cell = state.cells[position.row][position.col];
       if (cell.occupiedBy) {
@@ -62,7 +62,6 @@ const GameBoard: React.FC = () => {
     }
   };
 
-  // Calculate if a cell is a valid move for the selected meeple
   const isValidMove = (rowIndex: number, colIndex: number) => {
     if (state.gameStatus !== "playing" || !selectedMeeple || 
         selectedMeeple.arrested || selectedMeeple.escaped || state.diceValue === 0) {
@@ -87,7 +86,6 @@ const GameBoard: React.FC = () => {
     return dx + dy <= state.diceValue && dx + dy > 0;
   };
 
-  // Check if a cell contains a selectable meeple
   const isSelectableMeeple = (rowIndex: number, colIndex: number) => {
     if (state.gameStatus !== "playing" || state.diceValue === 0) {
       return false;
@@ -102,7 +100,6 @@ const GameBoard: React.FC = () => {
     return player && player.team === currentTeam && !player.arrested && !player.escaped;
   };
 
-  // Group arrested players by team to display in jail
   const getJailedPlayersByTeam = () => {
     const jailed = state.players.filter(p => p.arrested);
     const byTeam: Record<string, typeof jailed> = {};
@@ -168,7 +165,6 @@ const GameBoard: React.FC = () => {
     setShowTurnDialog(true);
   };
 
-  // Open turn dialog at the start of a new team's turn
   React.useEffect(() => {
     if (state.gameStatus === "playing" && state.diceValue === 0) {
       setShowTurnDialog(true);
@@ -177,7 +173,6 @@ const GameBoard: React.FC = () => {
 
   return (
     <div className="flex flex-col items-center mb-6 overflow-auto max-w-full relative">
-      {/* Game Board */}
       <div className="bg-game-board p-2 rounded-lg shadow-lg">
         <div className="grid grid-cols-20 gap-0.5">
           {state.cells.map((row, rowIndex) => 
@@ -195,7 +190,6 @@ const GameBoard: React.FC = () => {
         </div>
       </div>
 
-      {/* Turn Dialog */}
       <Dialog open={showTurnDialog} onOpenChange={setShowTurnDialog}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
@@ -231,8 +225,29 @@ const GameBoard: React.FC = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Next Turn Button (fixed to right side) */}
-      <div className="fixed right-4 top-1/2 transform -translate-y-1/2 z-10">
+      <div className="fixed right-4 top-1/2 transform -translate-y-1/2 z-10 flex flex-col gap-2">
+        {selectedMeeple && (
+          <Button
+            onClick={() => dispatch({ type: "DESELECT_MEEPLE" })}
+            variant="outline"
+            size="lg"
+            className="flex flex-col items-center gap-1 bg-white shadow-lg"
+          >
+            <span className="text-xs">Change Meeple</span>
+          </Button>
+        )}
+        
+        {state.canUndo && (
+          <Button
+            onClick={() => dispatch({ type: "UNDO_MOVE" })}
+            variant="outline"
+            size="lg"
+            className="flex flex-col items-center gap-1 bg-white shadow-lg"
+          >
+            <span className="text-xs">Undo Move</span>
+          </Button>
+        )}
+
         <Button 
           onClick={handleEndTurn}
           variant="outline"
@@ -245,7 +260,6 @@ const GameBoard: React.FC = () => {
         </Button>
       </div>
 
-      {/* Jail Section */}
       {Object.keys(jailedPlayersByTeam).length > 0 && (
         <div className="mt-6 p-3 bg-gray-800 rounded-lg w-full max-w-xl">
           <div className="flex items-center mb-2">

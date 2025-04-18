@@ -1,4 +1,3 @@
-
 export type Team = "creeps" | "italian" | "politicians" | "japanese";
 
 export type CellType = "path" | "exit" | "police" | "granny" | "empty" | "city" | "library" | "school" | "townhall" | "entrance" | "puppy";
@@ -50,14 +49,17 @@ export interface BoardState {
   turnCount: number;
   policeChains: Position[][]; // Added to track chains of police
   immobilizedPlayers: string[]; // Track players who can't move due to puppies
+  previousState: BoardState | null; // To store the state before a move for undo
+  canUndo: boolean;
 }
 
 export type GameAction = 
   | { type: "ROLL_DICE" }
   | { type: "MOVE_PLAYER"; position: Position }
   | { type: "SELECT_MEEPLE"; playerId: string }
+  | { type: "DESELECT_MEEPLE" }
+  | { type: "UNDO_MOVE" }
   | { type: "NEXT_TURN" }
   | { type: "START_GAME"; teams: Team[] }
   | { type: "RESET_GAME" }
   | { type: "PLAYER_CAUGHT"; playerId: string };
-

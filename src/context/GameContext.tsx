@@ -40,6 +40,8 @@ const initialState: BoardState = {
   turnCount: 0,
   policeChains: [],
   immobilizedPlayers: [],
+  previousState: null,
+  canUndo: false,
 };
 
 // Define landmark properties
@@ -726,7 +728,7 @@ const gameReducer = (state: BoardState, action: GameAction): BoardState => {
         if (selectedPlayer && state.immobilizedPlayers.includes(selectedPlayer.id)) {
           toast({
             title: "Can't Move!",
-            description: `This meeple is distracted by a nearby puppy 🐶`,
+            description: "This meeple is distracted by a nearby puppy 🐶",
             variant: "destructive"
           });
         }
@@ -740,10 +742,15 @@ const gameReducer = (state: BoardState, action: GameAction): BoardState => {
       };
     }
       
+    case "DESELECT_MEEPLE":
+      return {
+        ...state,
+        activeMeeple: null,
+      };
+
     case "MOVE_PLAYER": {
-      if (!state.activeMeeple) {
-        return state;
-      }
+      const stateBeforeMove = JSON.parse(JSON.stringify(state));
+      delete stateBeforeMove.previousState;
       
       const selectedPlayerIndex = state.players.findIndex(p => p.id === state.activeMeeple);
       if (selectedPlayerIndex === -1) {
@@ -957,9 +964,21 @@ const gameReducer = (state: BoardState, action: GameAction): BoardState => {
         diceValue: 0,
         gameStatus: allPlayersFinished ? "ended" : "playing",
         winner,
+        previousState: stateBeforeMove,
+        canUndo: true,
       };
     }
       
+    case "UNDO_MOVE":
+      if (!state.previousState || !state.canUndo) {
+        return state;
+      }
+      return {
+        ...state.previousState,
+        previousState: null,
+        canUndo: false,
+      };
+
     case "NEXT_TURN": {
       let nextPlayer = (state.currentPlayer + 1) % state.players.length;
       const currentTeam = state.players[state.currentPlayer].team;
@@ -1000,6 +1019,8 @@ const gameReducer = (state: BoardState, action: GameAction): BoardState => {
         activeMeeple: null,
         diceValue: 0,
         turnCount,
+        previousState: null,
+        canUndo: false,
       };
       
       newState = movePolice(newState);
