@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useReducer } from "react";
 import { BoardState, GameAction, Position, Team, Square, Meeple, Card, CardType } from "@/types/game";
 import { toast } from "@/hooks/use-toast";
@@ -539,17 +540,17 @@ const drawCard = (state: BoardState): BoardState => {
     return state;
   }
   
-  const [drawnCard, ...remainingDeck] = state.cards.deck;
+  const [cardDrawn, ...remainingDeck] = state.cards.deck;
   
   newState.cards = {
     ...state.cards,
     deck: remainingDeck,
-    justDrawn: drawnCard,
+    justDrawn: cardDrawn,
   };
   
   toast({
     title: "Card Drawn",
-    description: `You drew: ${drawnCard.name}`,
+    description: `You drew: ${cardDrawn.name}`,
   });
   
   return newState;
@@ -561,10 +562,10 @@ const keepCard = (state: BoardState): BoardState => {
   }
   
   const currentTeam = state.players[state.currentPlayer].team;
-  const drawnCard = state.cards.justDrawn;
+  const cardDrawn = state.cards.justDrawn;
   
   const newHands = { ...state.cards.playerHands };
-  newHands[currentTeam] = [...newHands[currentTeam], drawnCard];
+  newHands[currentTeam] = [...newHands[currentTeam], cardDrawn];
   
   return {
     ...state,
@@ -1177,11 +1178,11 @@ const gameReducer = (state: BoardState, action: GameAction): BoardState => {
         return state;
       }
       
-      const [drawnCard, ...remainingDeck] = state.cards.deck;
+      const [cardDrawn, ...remainingDeck] = state.cards.deck;
       
       toast({
         title: "Card Drawn",
-        description: `You drew: ${drawnCard.name}`,
+        description: `You drew: ${cardDrawn.name}`,
       });
       
       return {
@@ -1189,7 +1190,7 @@ const gameReducer = (state: BoardState, action: GameAction): BoardState => {
         cards: {
           ...state.cards,
           deck: remainingDeck,
-          justDrawn: drawnCard,
+          justDrawn: cardDrawn,
         },
       };
       
@@ -1199,10 +1200,10 @@ const gameReducer = (state: BoardState, action: GameAction): BoardState => {
       }
       
       const currentTeam = state.players[state.currentPlayer].team;
-      const drawnCard = state.cards.justDrawn;
+      const keptCard = state.cards.justDrawn;
       
       const newHands = { ...state.cards.playerHands };
-      newHands[currentTeam] = [...newHands[currentTeam], drawnCard];
+      newHands[currentTeam] = [...newHands[currentTeam], keptCard];
       
       return {
         ...state,
