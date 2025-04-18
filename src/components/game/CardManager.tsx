@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Dog, User, ArrowRight } from "lucide-react";
+import { toast } from "@/hooks/use-toast";
 
 const CardManager: React.FC = () => {
   const { state, dispatch } = useGame();
@@ -28,6 +29,29 @@ const CardManager: React.FC = () => {
   const [targetPuppy, setTargetPuppy] = useState<number | null>(null);
 
   const handleDrawCard = () => {
+    console.log("Draw card button clicked");
+    
+    // Check if player can draw a card (not during movement phase)
+    if (state.diceValue > 0) {
+      toast({
+        title: "Can't Draw Now",
+        description: "You need to complete your movement first.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    // If a card was just drawn, don't allow drawing another one
+    if (state.cards.justDrawn) {
+      toast({
+        title: "Card Already Drawn",
+        description: "You already drew a card this turn.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    // Dispatch the draw card action
     dispatch({ type: "DRAW_CARD" });
   };
 
@@ -138,7 +162,11 @@ const CardManager: React.FC = () => {
       {/* Draw button if no card was just drawn */}
       {!state.cards.justDrawn && state.gameStatus === "playing" && (
         <div className="flex justify-center mb-4">
-          <Button onClick={handleDrawCard} disabled={state.diceValue > 0}>
+          <Button 
+            onClick={handleDrawCard} 
+            disabled={state.diceValue > 0}
+            className="relative transition-all hover:bg-primary-hover active:scale-95"
+          >
             Draw Card
           </Button>
         </div>

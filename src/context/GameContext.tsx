@@ -3,10 +3,8 @@ import { BoardState, GameAction, Position, Team, Square, Meeple, Card, CardType 
 import { toast } from "@/hooks/use-toast";
 import { v4 as uuidv4 } from 'uuid';
 
-// Initial board size
 const BOARD_SIZE = 20;
 
-// Card definitions
 const CARDS: Omit<Card, 'id' | 'used'>[] = [
   // General cards
   { 
@@ -150,7 +148,6 @@ const CARDS: Omit<Card, 'id' | 'used'>[] = [
   },
 ];
 
-// Initial game state
 const initialState: BoardState = {
   cells: Array(BOARD_SIZE).fill(null).map((_, rowIndex) => 
     Array(BOARD_SIZE).fill(null).map((_, colIndex) => ({
@@ -214,7 +211,6 @@ const initialState: BoardState = {
   },
 };
 
-// Define landmark properties
 const landmarks = [
   { type: "city", size: 4, position: { row: 0, col: 2 } },
   { type: "library", size: 3, position: { row: 2, col: BOARD_SIZE - 4 } },
@@ -222,7 +218,6 @@ const landmarks = [
   { type: "townhall", size: 3, position: { row: BOARD_SIZE - 4, col: BOARD_SIZE - 4 } },
 ];
 
-// Function to find suitable locations for building entrances
 const findEntranceLocations = (buildingType: string, buildingPositions: Position[], cells: Square[][]): Position[] => {
   const potentialEntrances: Position[] = [];
   
@@ -252,7 +247,6 @@ const findEntranceLocations = (buildingType: string, buildingPositions: Position
   return shuffled.slice(0, Math.min(2, shuffled.length));
 };
 
-// Generate initial board with exits, police, grannies, and landmarks
 const generateInitialBoard = (teams: Team[]): BoardState => {
   const state = { ...initialState };
   state.cells = Array(BOARD_SIZE).fill(null).map((_, rowIndex) => 
@@ -457,7 +451,6 @@ const generateInitialBoard = (teams: Team[]): BoardState => {
   
   state.puppies = puppies;
   
-  // Initialize the card deck
   const deck = createCardDeck();
   const playerHands: Record<Team, Card[]> = {
     creeps: [],
@@ -466,7 +459,6 @@ const generateInitialBoard = (teams: Team[]): BoardState => {
     japanese: [],
   };
   
-  // Only initialize hands for teams in the game
   teams.forEach(team => {
     playerHands[team] = [];
   });
@@ -500,11 +492,9 @@ const generateInitialBoard = (teams: Team[]): BoardState => {
   return state;
 };
 
-// Create a deck of cards
 const createCardDeck = (): Card[] => {
   const deck: Card[] = [];
   
-  // Add 3 copies of each general card
   CARDS.filter(card => !card.team).forEach(cardTemplate => {
     for (let i = 0; i < 3; i++) {
       deck.push({
@@ -515,7 +505,6 @@ const createCardDeck = (): Card[] => {
     }
   });
   
-  // Add 2 copies of each team-specific card
   CARDS.filter(card => card.team).forEach(cardTemplate => {
     for (let i = 0; i < 2; i++) {
       deck.push({
@@ -526,11 +515,9 @@ const createCardDeck = (): Card[] => {
     }
   });
   
-  // Shuffle the deck
   return shuffle(deck);
 };
 
-// Fisher-Yates shuffle algorithm
 const shuffle = <T,>(array: T[]): T[] => {
   const newArray = [...array];
   for (let i = newArray.length - 1; i > 0; i--) {
@@ -552,7 +539,6 @@ const drawCard = (state: BoardState): BoardState => {
     return state;
   }
   
-  // Draw the top card
   const [drawnCard, ...remainingDeck] = state.cards.deck;
   
   newState.cards = {
@@ -577,7 +563,6 @@ const keepCard = (state: BoardState): BoardState => {
   const currentTeam = state.players[state.currentPlayer].team;
   const drawnCard = state.cards.justDrawn;
   
-  // Add the drawn card to the player's hand
   const newHands = { ...state.cards.playerHands };
   newHands[currentTeam] = [...newHands[currentTeam], drawnCard];
   
@@ -596,7 +581,6 @@ const useCard = (state: BoardState, cardId: string, targetId?: string, position?
   const cardIndex = state.cards.playerHands[currentTeam].findIndex(card => card.id === cardId);
   
   if (cardIndex === -1) {
-    // Check if it's the just drawn card
     if (state.cards.justDrawn?.id === cardId) {
       return useJustDrawnCard(state, targetId, position);
     }
@@ -606,10 +590,8 @@ const useCard = (state: BoardState, cardId: string, targetId?: string, position?
   const card = state.cards.playerHands[currentTeam][cardIndex];
   let newState = { ...state };
   
-  // Process card effects
   switch (card.type) {
     case "smoke_bomb":
-      // Implement smoke bomb effect - police ignore this player
       const playerIds = state.players
         .filter(p => p.team === currentTeam && !p.arrested && !p.escaped)
         .map(p => p.id);
@@ -626,7 +608,6 @@ const useCard = (state: BoardState, cardId: string, targetId?: string, position?
       break;
 
     case "shortcut":
-      // Allow diagonal movement for the active meeple
       if (state.activeMeeple) {
         newState.cards.activeEffects.moveDiagonally = state.activeMeeple;
         
@@ -645,7 +626,6 @@ const useCard = (state: BoardState, cardId: string, targetId?: string, position?
       break;
 
     case "fake_pass":
-      // Allow passing through grannies
       const meepleIds = state.players
         .filter(p => p.team === currentTeam && !p.arrested && !p.escaped)
         .map(p => p.id);
@@ -671,13 +651,11 @@ const useCard = (state: BoardState, cardId: string, targetId?: string, position?
         return state;
       }
       
-      // Make the selected puppy not distract anyone
       newState.cards.activeEffects.puppyImmunity = [
         ...newState.cards.activeEffects.puppyImmunity,
         position
       ];
       
-      // Update immobilized players
       newState = updateImmobilizedPlayers(newState);
       
       toast({
@@ -687,12 +665,10 @@ const useCard = (state: BoardState, cardId: string, targetId?: string, position?
       break;
 
     case "switcheroo":
-      // To be implemented: UI to select two meeples to swap
       toast({
         title: "Card Used",
         description: "Switcheroo: Select two of your meeples to swap positions.",
       });
-      // This would need additional UI state to track the two meeples being swapped
       break;
 
     case "dumpster_dive":
@@ -702,7 +678,6 @@ const useCard = (state: BoardState, cardId: string, targetId?: string, position?
           state.activeMeeple
         ];
         
-        // Also ignore puppies for this meeple
         const selectedPlayer = state.players.find(p => p.id === state.activeMeeple);
         if (selectedPlayer) {
           newState.immobilizedPlayers = newState.immobilizedPlayers.filter(
@@ -725,21 +700,17 @@ const useCard = (state: BoardState, cardId: string, targetId?: string, position?
       break;
 
     case "shiv":
-      // To be implemented: UI to select an adjacent police officer to push
       toast({
         title: "Card Used",
         description: "Shiv: Select an adjacent police officer to push back.",
       });
-      // This would need additional UI to select which police to push
       break;
 
     case "lookout":
-      // Show where puppies will move (visual indicator only)
       toast({
         title: "Card Used",
         description: "Lookout: You can now see where puppies will move next.",
       });
-      // This would need a UI change to show the puppy movement prediction
       break;
 
     case "bribe":
@@ -752,18 +723,14 @@ const useCard = (state: BoardState, cardId: string, targetId?: string, position?
       break;
 
     case "getaway_car":
-      // To be implemented: UI to select two meeples to move one space each
       toast({
         title: "Card Used",
         description: "Getaway Car: You can move two of your meeples one space each.",
       });
-      // This would need additional UI state to track the meeples being moved
       break;
 
     case "cover_story":
       if (state.activeMeeple) {
-        // Allow meeple to move through police
-        // This would need changes to the valid move detection logic
         toast({
           title: "Card Used",
           description: "Cover Story: This meeple can move through one police square this turn.",
@@ -818,7 +785,6 @@ const useCard = (state: BoardState, cardId: string, targetId?: string, position?
       break;
 
     case "shadow_step":
-      // Similar to fake_pass but for just one meeple
       if (state.activeMeeple) {
         newState.cards.activeEffects.grannyIgnore = [
           ...newState.cards.activeEffects.grannyIgnore,
@@ -840,7 +806,6 @@ const useCard = (state: BoardState, cardId: string, targetId?: string, position?
       break;
 
     case "meditation":
-      // Allow rerolling the dice
       if (state.diceValue > 0) {
         newState.diceValue = Math.floor(Math.random() * 6) + 1;
         
@@ -859,7 +824,6 @@ const useCard = (state: BoardState, cardId: string, targetId?: string, position?
       break;
 
     case "honor_bound":
-      // This would be triggered when a player is caught, not used directly
       toast({
         title: "Card Used",
         description: "Honor Bound: If a gang member is caught, another can move 3 spaces.",
@@ -875,7 +839,6 @@ const useCard = (state: BoardState, cardId: string, targetId?: string, position?
       return state;
   }
   
-  // Mark the card as used
   const newPlayerHands = { ...newState.cards.playerHands };
   const newHand = [...newPlayerHands[currentTeam]];
   newHand[cardIndex] = { ...newHand[cardIndex], used: true };
@@ -898,7 +861,6 @@ const useJustDrawnCard = (state: BoardState, targetId?: string, position?: Posit
   const currentTeam = state.players[state.currentPlayer].team;
   const card = state.cards.justDrawn;
   
-  // Add card to hand first (so we can use the same useCard logic)
   const withCardInHand = {
     ...state,
     cards: {
@@ -911,11 +873,9 @@ const useJustDrawnCard = (state: BoardState, targetId?: string, position?: Posit
     }
   };
   
-  // Now use the card
   return useCard(withCardInHand, card.id, targetId, position);
 };
 
-// Create a trading offer
 const offerTrade = (state: BoardState, fromTeam: Team, toTeam: Team, cardId: string): BoardState => {
   const card = state.cards.playerHands[fromTeam].find(c => c.id === cardId);
   
@@ -936,7 +896,6 @@ const offerTrade = (state: BoardState, fromTeam: Team, toTeam: Team, cardId: str
   };
 };
 
-// Accept a trade offer
 const acceptTrade = (state: BoardState): BoardState => {
   const { from, to, card } = state.cards.tradingOffer;
   
@@ -944,10 +903,7 @@ const acceptTrade = (state: BoardState): BoardState => {
     return state;
   }
   
-  // Remove card from offering player's hand
   const fromHand = state.cards.playerHands[from].filter(c => c.id !== card.id);
-  
-  // Add card to receiving player's hand
   const toHand = [...state.cards.playerHands[to], card];
   
   toast({
@@ -973,7 +929,6 @@ const acceptTrade = (state: BoardState): BoardState => {
   };
 };
 
-// Decline a trade offer
 const declineTrade = (state: BoardState): BoardState => {
   toast({
     title: "Trade Declined",
@@ -993,13 +948,10 @@ const declineTrade = (state: BoardState): BoardState => {
   };
 };
 
-// Update which players are immobilized by puppies
 const updateImmobilizedPlayers = (state: BoardState): BoardState => {
   const immobilizedIds: string[] = [];
   
-  // Check for each puppy
   state.puppies.forEach(puppyPos => {
-    // Skip puppies that are distracted this turn
     const isPuppyDistracted = state.cards.activeEffects.puppyImmunity.some(
       pos => pos.row === puppyPos.row && pos.col === puppyPos.col
     );
@@ -1008,7 +960,6 @@ const updateImmobilizedPlayers = (state: BoardState): BoardState => {
       return;
     }
     
-    // Check surrounding cells (adjacent squares) for players
     const adjacentPositions = [
       { row: puppyPos.row - 1, col: puppyPos.col },
       { row: puppyPos.row + 1, col: puppyPos.col },
@@ -1035,14 +986,12 @@ const updateImmobilizedPlayers = (state: BoardState): BoardState => {
   };
 };
 
-// Game reducer function
 const gameReducer = (state: BoardState, action: GameAction): BoardState => {
   switch (action.type) {
     case "START_GAME":
       return generateInitialBoard(action.teams);
       
     case "ROLL_DICE":
-      // Roll a dice (1-6)
       return {
         ...state,
         diceValue: Math.floor(Math.random() * 6) + 1,
@@ -1050,7 +999,6 @@ const gameReducer = (state: BoardState, action: GameAction): BoardState => {
       };
       
     case "SELECT_MEEPLE":
-      // Save the previous state for undo functionality
       return {
         ...state,
         activeMeeple: action.playerId,
@@ -1076,7 +1024,6 @@ const gameReducer = (state: BoardState, action: GameAction): BoardState => {
       const oldPos = player.position;
       const newPos = action.position;
       
-      // Check if this is a teleportation via entrance
       const targetCell = state.cells[newPos.row][newPos.col];
       let nextPos = newPos;
       
@@ -1084,24 +1031,20 @@ const gameReducer = (state: BoardState, action: GameAction): BoardState => {
         nextPos = targetCell.connectedTo;
       }
       
-      // Update player position
       const updatedPlayers = [...state.players];
       updatedPlayers[playerIndex] = {
         ...player,
         position: nextPos,
       };
       
-      // Update cells
       const newCells = [...state.cells];
       
-      // Clear old cell
       newCells[oldPos.row][oldPos.col] = {
         ...state.cells[oldPos.row][oldPos.col],
         occupied: false,
         occupiedBy: undefined,
       };
       
-      // Check if player escaped
       let escaped = false;
       if (state.cells[nextPos.row][nextPos.col].type === "exit") {
         updatedPlayers[playerIndex].escaped = true;
@@ -1112,7 +1055,6 @@ const gameReducer = (state: BoardState, action: GameAction): BoardState => {
           description: `${player.team} meeple has escaped!`,
         });
       } else {
-        // Occupy new cell
         newCells[nextPos.row][nextPos.col] = {
           ...state.cells[nextPos.row][nextPos.col],
           occupied: true,
@@ -1120,12 +1062,10 @@ const gameReducer = (state: BoardState, action: GameAction): BoardState => {
         };
       }
       
-      // Check if game is over
       let gameStatus = state.gameStatus;
       let winner = state.winner;
       
       if (escaped) {
-        // Count escaped meeples per team
         const escapedCounts: Record<Team, number> = {
           creeps: 0,
           italian: 0,
@@ -1139,7 +1079,6 @@ const gameReducer = (state: BoardState, action: GameAction): BoardState => {
           }
         });
         
-        // Check winning condition (3+ meeples escaped)
         Object.entries(escapedCounts).forEach(([team, count]) => {
           if (count >= 3) {
             gameStatus = "ended";
@@ -1165,7 +1104,6 @@ const gameReducer = (state: BoardState, action: GameAction): BoardState => {
     }
       
     case "NEXT_TURN": {
-      // Reset active effects for cards
       const resetActiveEffects = {
         policeIgnore: [],
         grannyIgnore: [],
@@ -1177,7 +1115,6 @@ const gameReducer = (state: BoardState, action: GameAction): BoardState => {
         skippedPlayers: state.cards.activeEffects.skippedPlayers,
       };
       
-      // Handle police and puppies movement
       let newState = { 
         ...state,
         activeMeeple: null,
@@ -1185,15 +1122,14 @@ const gameReducer = (state: BoardState, action: GameAction): BoardState => {
         cards: {
           ...state.cards,
           activeEffects: resetActiveEffects,
+          justDrawn: null,
         },
         turnCount: state.turnCount + 1,
         canUndo: false,
       };
       
-      // Find next player
       let nextPlayerIndex = (state.currentPlayer + 1) % state.players.length;
       
-      // Keep skipping until finding a player who can play
       let safetyCounter = 0;
       while (
         safetyCounter < state.players.length &&
@@ -1205,7 +1141,6 @@ const gameReducer = (state: BoardState, action: GameAction): BoardState => {
         safetyCounter++;
       }
       
-      // Remove this player from skipped list if they were in it
       const updatedSkippedPlayers = resetActiveEffects.skippedPlayers.filter(
         id => id !== state.players[nextPlayerIndex].id
       );
@@ -1224,7 +1159,6 @@ const gameReducer = (state: BoardState, action: GameAction): BoardState => {
     }
       
     case "UNDO_MOVE":
-      // Restore previous state if available
       if (state.previousState) {
         return {
           ...state.previousState,
@@ -1234,10 +1168,50 @@ const gameReducer = (state: BoardState, action: GameAction): BoardState => {
       return state;
       
     case "DRAW_CARD":
-      return drawCard(state);
+      console.log("DRAW_CARD action received");
+      if (state.cards.deck.length === 0) {
+        toast({
+          title: "Deck Empty",
+          description: "No more cards left in the deck!",
+        });
+        return state;
+      }
+      
+      const [drawnCard, ...remainingDeck] = state.cards.deck;
+      
+      toast({
+        title: "Card Drawn",
+        description: `You drew: ${drawnCard.name}`,
+      });
+      
+      return {
+        ...state,
+        cards: {
+          ...state.cards,
+          deck: remainingDeck,
+          justDrawn: drawnCard,
+        },
+      };
       
     case "KEEP_CARD":
-      return keepCard(state);
+      if (!state.cards.justDrawn) {
+        return state;
+      }
+      
+      const currentTeam = state.players[state.currentPlayer].team;
+      const drawnCard = state.cards.justDrawn;
+      
+      const newHands = { ...state.cards.playerHands };
+      newHands[currentTeam] = [...newHands[currentTeam], drawnCard];
+      
+      return {
+        ...state,
+        cards: {
+          ...state.cards,
+          playerHands: newHands,
+          justDrawn: null,
+        },
+      };
       
     case "USE_CARD":
       return useCard(state, action.cardId, action.targetId, action.position);
@@ -1256,7 +1230,6 @@ const gameReducer = (state: BoardState, action: GameAction): BoardState => {
   }
 };
 
-// Create the context
 type GameContextType = {
   state: BoardState;
   dispatch: React.Dispatch<GameAction>;
@@ -1264,7 +1237,6 @@ type GameContextType = {
 
 const GameContext = createContext<GameContextType | undefined>(undefined);
 
-// Context provider component
 export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [state, dispatch] = useReducer(gameReducer, initialState);
   
@@ -1275,7 +1247,6 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
   );
 };
 
-// Custom hook to use the context
 export const useGame = () => {
   const context = useContext(GameContext);
   if (context === undefined) {
