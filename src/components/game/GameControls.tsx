@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useGame } from "@/context/GameContext";
 import { Button } from "@/components/ui/button";
@@ -38,18 +38,23 @@ const GameControls: React.FC = () => {
     }, 500);
   };
 
-  const handleEndTurn = () => {
+  // Memoize the end turn handler to prevent multiple dispatches
+  const handleEndTurn = useCallback(() => {
     if (state.gameStatus !== "playing") return;
     
-    // Add a toast to confirm turn end
-    toast({
-      title: "Turn Ended",
-      description: `${currentTeam}'s turn has ended.`,
-    });
-    
-    // Dispatch the NEXT_TURN action
-    dispatch({ type: "NEXT_TURN" });
-  };
+    // Wrap the toast and dispatch in setTimeout to avoid React warnings
+    // about updating state during render
+    setTimeout(() => {
+      // Add a toast to confirm turn end
+      toast({
+        title: "Turn Ended",
+        description: `${currentTeam}'s turn has ended.`,
+      });
+      
+      // Dispatch the NEXT_TURN action
+      dispatch({ type: "NEXT_TURN" });
+    }, 0);
+  }, [state.gameStatus, currentTeam, dispatch]);
 
   const renderDice = () => {
     if (state.diceValue === 0) {
