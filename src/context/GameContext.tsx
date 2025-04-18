@@ -993,6 +993,297 @@ const declineTrade = (state: BoardState): BoardState => {
   };
 };
 
+// Update which players are immobilized by puppies
+const updateImmobilizedPlayers = (state: BoardState): BoardState => {
+  const immobilizedIds: string[] = [];
+  
+  // Check for each puppy
+  state.puppies.forEach(puppyPos => {
+    // Skip puppies that are distracted this turn
+    const isPuppyDistracted = state.cards.activeEffects.puppyImmunity.some(
+      pos => pos.row === puppyPos.row && pos.col === puppyPos.col
+    );
+    
+    if (isPuppyDistracted) {
+      return;
+    }
+    
+    // Check surrounding cells (adjacent squares) for players
+    const adjacentPositions = [
+      { row: puppyPos.row - 1, col: puppyPos.col },
+      { row: puppyPos.row + 1, col: puppyPos.col },
+      { row: puppyPos.row, col: puppyPos.col - 1 },
+      { row: puppyPos.row, col: puppyPos.col + 1 },
+    ];
+    
+    adjacentPositions.forEach(pos => {
+      if (
+        pos.row >= 0 && pos.row < state.cells.length &&
+        pos.col >= 0 && pos.col < state.cells[0].length
+      ) {
+        const cell = state.cells[pos.row][pos.col];
+        if (cell.occupiedBy) {
+          immobilizedIds.push(cell.occupiedBy);
+        }
+      }
+    });
+  });
+  
+  return {
+    ...state,
+    immobilizedPlayers: immobilizedIds,
+  };
+};
+
+// Game reducer function
+const gameReducer = (state: BoardState, action: GameAction): BoardState => {
+  switch (action.type) {
+    case "START_GAME":
+      return generateInitialBoard(action.teams);
+      
+    case "ROLL_DICE":
+      // Roll a dice (1-6)
+      return {
+        ...state,
+        diceValue: Math.floor(Math.random() * 6) + 1,
+        activeMeeple: null,
+      };
+      
+    case "SELECT_MEEPLE":
+      // Save the previous state for undo functionality
+      return {
+        ...state,
+        activeMeeple: action.playerId,
+        previousState: state,
+        canUndo: true,
+      };
+      
+    case "DESELECT_MEEPLE":
+      return {
+        ...state,
+        activeMeeple: null,
+      };
+      
+    case "MOVE_PLAYER": {
+      if (!state.activeMeeple) return state;
+      
+      const playerId = state.activeMeeple;
+      const playerIndex = state.players.findIndex(p => p.id === playerId);
+      
+      if (playerIndex === -1) return state;
+      
+      const player = state.players[playerIndex];
+      const oldPos = player.position;
+      const newPos = action.position;
+      
+      // Check if this is a teleportation via entrance
+      const targetCell = state.cells[newPos.row][newPos.col];
+      let nextPos = newPos;
+      
+      if (targetCell.type === "entrance" && targetCell.connectedTo) {
+        nextPos = targetCell.connectedTo;
+      }
+      
+      // Update player position
+      const updatedPlayers = [...state.players];
+      updatedPlayers[playerIndex] = {
+        ...player,
+        position: nextPos,
+      };
+      
+      // Update cells
+      const newCells = [...state.cells];
+      
+      // Clear old cell
+      newCells[oldPos.row][oldPos.col] = {
+        ...state.cells[oldPos.row][oldPos.col],
+        occupied: false,
+        occupiedBy: undefined,
+      };
+      
+      // Check if player escaped
+      let escaped = false;
+      if (state.cells[nextPos.row][nextPos.col].type === "exit") {
+        updatedPlayers[playerIndex].escaped = true;
+        escaped = true;
+        
+        toast({
+          title: "Escaped!",
+          description: `${player.team} meeple has escaped!`,
+        });
+      } else {
+        // Occupy new cell
+        newCells[nextPos.row][nextPos.col] = {
+          ...state.cells[nextPos.row][nextPos.col],
+          occupied: true,
+          occupiedBy: playerId,
+        };
+      }
+      
+      // Check if game is over
+      let gameStatus = state.gameStatus;
+      let winner = state.winner;
+      
+      if (escaped) {
+        // Count escaped meeples per team
+        const escapedCounts: Record<Team, number> = {
+          creeps: 0,
+          italian: 0,
+          politicians: 0,
+          japanese: 0,
+        };
+        
+        updatedPlayers.forEach(p => {
+          if (p.escaped) {
+            escapedCounts[p.team]++;
+          }
+        });
+        
+        // Check winning condition (3+ meeples escaped)
+        Object.entries(escapedCounts).forEach(([team, count]) => {
+          if (count >= 3) {
+            gameStatus = "ended";
+            winner = team as Team;
+            
+            toast({
+              title: "Game Over!",
+              description: `${team} team wins with ${count} escaped meeples!`,
+            });
+          }
+        });
+      }
+      
+      return {
+        ...state,
+        players: updatedPlayers,
+        cells: newCells,
+        diceValue: 0,
+        activeMeeple: null,
+        gameStatus,
+        winner,
+      };
+    }
+      
+    case "NEXT_TURN": {
+      // Reset active effects for cards
+      const resetActiveEffects = {
+        policeIgnore: [],
+        grannyIgnore: [],
+        policeImmobilized: false,
+        policeExpansionDelay: false,
+        moveDiagonally: null,
+        puppyImmunity: [],
+        policeMoveLimited: false,
+        skippedPlayers: state.cards.activeEffects.skippedPlayers,
+      };
+      
+      // Handle police and puppies movement
+      let newState = { 
+        ...state,
+        activeMeeple: null,
+        diceValue: 0,
+        cards: {
+          ...state.cards,
+          activeEffects: resetActiveEffects,
+        },
+        turnCount: state.turnCount + 1,
+        canUndo: false,
+      };
+      
+      // Find next player
+      let nextPlayerIndex = (state.currentPlayer + 1) % state.players.length;
+      
+      // Keep skipping until finding a player who can play
+      let safetyCounter = 0;
+      while (
+        safetyCounter < state.players.length &&
+        (state.players[nextPlayerIndex].arrested || 
+         state.players[nextPlayerIndex].escaped ||
+         resetActiveEffects.skippedPlayers.includes(state.players[nextPlayerIndex].id))
+      ) {
+        nextPlayerIndex = (nextPlayerIndex + 1) % state.players.length;
+        safetyCounter++;
+      }
+      
+      // Remove this player from skipped list if they were in it
+      const updatedSkippedPlayers = resetActiveEffects.skippedPlayers.filter(
+        id => id !== state.players[nextPlayerIndex].id
+      );
+      
+      return {
+        ...newState,
+        currentPlayer: nextPlayerIndex,
+        cards: {
+          ...newState.cards,
+          activeEffects: {
+            ...newState.cards.activeEffects,
+            skippedPlayers: updatedSkippedPlayers,
+          },
+        },
+      };
+    }
+      
+    case "UNDO_MOVE":
+      // Restore previous state if available
+      if (state.previousState) {
+        return {
+          ...state.previousState,
+          canUndo: false,
+        };
+      }
+      return state;
+      
+    case "DRAW_CARD":
+      return drawCard(state);
+      
+    case "KEEP_CARD":
+      return keepCard(state);
+      
+    case "USE_CARD":
+      return useCard(state, action.cardId, action.targetId, action.position);
+      
+    case "OFFER_TRADE":
+      return offerTrade(state, action.fromTeam, action.toTeam, action.cardId);
+      
+    case "ACCEPT_TRADE":
+      return acceptTrade(state);
+      
+    case "DECLINE_TRADE":
+      return declineTrade(state);
+      
+    default:
+      return state;
+  }
+};
+
+// Create the context
+type GameContextType = {
+  state: BoardState;
+  dispatch: React.Dispatch<GameAction>;
+};
+
+const GameContext = createContext<GameContextType | undefined>(undefined);
+
+// Context provider component
+export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [state, dispatch] = useReducer(gameReducer, initialState);
+  
+  return (
+    <GameContext.Provider value={{ state, dispatch }}>
+      {children}
+    </GameContext.Provider>
+  );
+};
+
+// Custom hook to use the context
+export const useGame = () => {
+  const context = useContext(GameContext);
+  if (context === undefined) {
+    throw new Error('useGame must be used within a GameProvider');
+  }
+  return context;
+};
+
 export { 
   initialState, 
   generateInitialBoard, 
