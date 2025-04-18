@@ -33,7 +33,7 @@ const CARDS: Omit<Card, 'id' | 'used'>[] = [
   { 
     type: "distraction", 
     name: "Distraction", 
-    description: "Choose one puppy – it doesn't distract anyone this round.", 
+    description: "Choose one puppy – it doesn’t distract anyone this round.", 
     flavor: "Squirrel!",
     icon: "dog"
   },
