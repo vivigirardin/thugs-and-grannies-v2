@@ -1105,6 +1105,7 @@ const gameReducer = (state: BoardState, action: GameAction): BoardState => {
     }
       
     case "NEXT_TURN": {
+      // Fixed turn progression logic
       const resetActiveEffects = {
         policeIgnore: [],
         grannyIgnore: [],
@@ -1129,23 +1130,42 @@ const gameReducer = (state: BoardState, action: GameAction): BoardState => {
         canUndo: false,
       };
       
+      // Calculate the next player index
       let nextPlayerIndex = (state.currentPlayer + 1) % state.players.length;
       
-      let safetyCounter = 0;
-      while (
-        safetyCounter < state.players.length &&
-        (state.players[nextPlayerIndex].arrested || 
-         state.players[nextPlayerIndex].escaped ||
-         resetActiveEffects.skippedPlayers.includes(state.players[nextPlayerIndex].id))
-      ) {
+      // Loop to find the next valid player (not arrested, not escaped, not skipped)
+      let loopCount = 0;
+      const activeTeams = new Set(state.players.map(p => p.team));
+      
+      while (loopCount < state.players.length) {
+        const nextPlayer = state.players[nextPlayerIndex];
+        const isSkipped = resetActiveEffects.skippedPlayers.includes(nextPlayer.id);
+        
+        if (!nextPlayer.arrested && !nextPlayer.escaped && !isSkipped) {
+          // Found a valid player
+          break;
+        }
+        
+        // If this player should be skipped but is in the skipped list, remove them for next round
+        if (isSkipped) {
+          resetActiveEffects.skippedPlayers = resetActiveEffects.skippedPlayers.filter(
+            id => id !== nextPlayer.id
+          );
+        }
+        
         nextPlayerIndex = (nextPlayerIndex + 1) % state.players.length;
-        safetyCounter++;
+        loopCount++;
+        
+        // If we've checked all players and found none valid, break to avoid infinite loop
+        if (loopCount >= state.players.length) {
+          // Game might be in an unwinnable state - find any non-arrested player
+          nextPlayerIndex = state.players.findIndex(p => !p.arrested && !p.escaped);
+          if (nextPlayerIndex === -1) nextPlayerIndex = 0; // Fallback
+          break;
+        }
       }
       
-      const updatedSkippedPlayers = resetActiveEffects.skippedPlayers.filter(
-        id => id !== state.players[nextPlayerIndex].id
-      );
-      
+      // Update the current player index
       return {
         ...newState,
         currentPlayer: nextPlayerIndex,
@@ -1153,7 +1173,7 @@ const gameReducer = (state: BoardState, action: GameAction): BoardState => {
           ...newState.cards,
           activeEffects: {
             ...newState.cards.activeEffects,
-            skippedPlayers: updatedSkippedPlayers,
+            skippedPlayers: resetActiveEffects.skippedPlayers,
           },
         },
       };

@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { useGame } from "@/context/GameContext";
 import GameCell from "./GameCell";
@@ -12,6 +13,7 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
+  DialogFooter,
 } from "@/components/ui/dialog";
 
 const GameBoard: React.FC = () => {
@@ -190,6 +192,16 @@ const GameBoard: React.FC = () => {
         </div>
       </div>
 
+      <div className="mt-4 bg-amber-50 p-3 rounded-lg border border-amber-200">
+        <h3 className="font-bold mb-1 text-amber-800">Turn Order:</h3>
+        <ol className="list-decimal text-sm text-amber-700 pl-5">
+          <li>Roll the dice</li>
+          <li>Draw a card OR play a card from your hand</li>
+          <li>Move a meeple (undo if needed)</li>
+          <li>End turn</li>
+        </ol>
+      </div>
+
       <Dialog open={showTurnDialog} onOpenChange={setShowTurnDialog}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
@@ -201,7 +213,7 @@ const GameBoard: React.FC = () => {
             </DialogDescription>
           </DialogHeader>
           
-          <div className="flex flex-col items-center gap-6 py-4">
+          <div className="flex flex-col items-center gap-4 py-4">
             <div className={`p-4 rounded-full ${getTeamColor(currentTeam || "")}`}>
               <div className={`${isDiceRolling ? 'animate-dice-roll' : ''}`}>
                 {renderDice()}
@@ -218,9 +230,19 @@ const GameBoard: React.FC = () => {
             ) : (
               <div className="text-center">
                 <p className="mb-2 text-lg font-medium">You rolled a {state.diceValue}!</p>
-                <p className="text-sm text-gray-600">Click a meeple to select it, then click a highlighted cell to move.</p>
+                <p className="text-sm text-gray-600 mb-2">Click a meeple to select it, then click a highlighted cell to move.</p>
               </div>
             )}
+
+            <div className="bg-amber-50 p-3 rounded-lg border border-amber-200 w-full mt-2">
+              <h3 className="font-bold mb-1 text-amber-800 text-sm">Turn Order:</h3>
+              <ol className="list-decimal text-sm text-amber-700 pl-5">
+                <li className={state.diceValue ? "line-through opacity-60" : "font-bold"}>Roll the dice</li>
+                <li className={state.cards.justDrawn ? "line-through opacity-60" : ""}>Draw a card OR play a card</li>
+                <li className={state.diceValue === 0 ? "line-through opacity-60" : ""}>Move a meeple</li>
+                <li>End turn</li>
+              </ol>
+            </div>
           </div>
         </DialogContent>
       </Dialog>

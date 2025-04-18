@@ -31,21 +31,21 @@ const CardManager: React.FC = () => {
   const handleDrawCard = () => {
     console.log("Draw card button clicked");
     
-    // Check if player can draw a card (not during movement phase)
-    if (state.diceValue > 0) {
+    // Check if player already has a card drawn this turn
+    if (state.cards.justDrawn) {
       toast({
-        title: "Can't Draw Now",
-        description: "You need to complete your movement first.",
+        title: "Card Already Drawn",
+        description: "You already drew a card this turn.",
         variant: "destructive",
       });
       return;
     }
     
-    // If a card was just drawn, don't allow drawing another one
-    if (state.cards.justDrawn) {
+    // Check if player can draw a card (can only draw when not in movement phase)
+    if (state.diceValue > 0) {
       toast({
-        title: "Card Already Drawn",
-        description: "You already drew a card this turn.",
+        title: "Can't Draw Now",
+        description: "You need to complete your movement first.",
         variant: "destructive",
       });
       return;
@@ -175,16 +175,16 @@ const CardManager: React.FC = () => {
       {/* Current hand */}
       {currentTeam && (
         <div>
-          <h3 className="font-bold mb-2">Your Hand</h3>
+          <h3 className="font-bold mb-2 capitalize">{currentTeam}'s Hand</h3>
           {currentHand.length === 0 ? (
             <p className="text-gray-500 text-center py-2">No cards</p>
           ) : (
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
               {currentHand.map(card => (
                 <div key={card.id} className="flex flex-col items-center">
                   <GameCard 
                     card={card} 
-                    disabled={card.used || state.diceValue === 0} 
+                    disabled={card.used || state.diceValue > 0} 
                     onClick={() => !card.used && state.diceValue === 0 ? handleUseCard(card) : null} 
                   />
                   <div className="flex gap-1 mt-1">
