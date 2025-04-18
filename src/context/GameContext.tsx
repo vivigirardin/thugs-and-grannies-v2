@@ -358,6 +358,7 @@ const addNewPolice = (state: BoardState): BoardState => {
           pos.col >= 0 && pos.col < BOARD_SIZE &&
           state.cells[pos.row][pos.col].type === "path" &&
           !state.cells[pos.row][pos.col].occupied &&
+          !isNearExit(pos, state.exits, 3) &&
           !state.exits.some(exit => exit.row === pos.row && exit.col === pos.col)) {
         adjacentCells.push(pos);
       }
@@ -369,6 +370,7 @@ const addNewPolice = (state: BoardState): BoardState => {
         for (let c = Math.max(0, lastOfficer.col - 2); c <= Math.min(BOARD_SIZE - 1, lastOfficer.col + 2); c++) {
           if (r !== lastOfficer.row || c !== lastOfficer.col) {
             if (state.cells[r][c].type === "path" && !state.cells[r][c].occupied &&
+                !isNearExit({row: r, col: c}, state.exits, 3) &&
                 !state.exits.some(exit => exit.row === r && exit.col === c)) {
               nearbyPositions.push({ row: r, col: c });
             }
@@ -376,7 +378,9 @@ const addNewPolice = (state: BoardState): BoardState => {
         }
       }
       
-      for (let i = 0; i < 3 && nearbyPositions.length > 0; i++) {
+      const policeToAdd = Math.min(2, nearbyPositions.length);
+      
+      for (let i = 0; i < policeToAdd && nearbyPositions.length > 0; i++) {
         const randomIndex = Math.floor(Math.random() * nearbyPositions.length);
         const newPos = nearbyPositions[randomIndex];
         nearbyPositions.splice(randomIndex, 1);
@@ -385,7 +389,9 @@ const addNewPolice = (state: BoardState): BoardState => {
         updatedChains[chainIndex] = [...updatedChains[chainIndex], newPos];
       }
     } else {
-      for (let i = 0; i < 3 && adjacentCells.length > 0; i++) {
+      const policeToAdd = Math.min(2, adjacentCells.length);
+      
+      for (let i = 0; i < policeToAdd && adjacentCells.length > 0; i++) {
         const randomIndex = Math.floor(Math.random() * adjacentCells.length);
         const newPos = adjacentCells[randomIndex];
         adjacentCells.splice(randomIndex, 1);
@@ -507,12 +513,14 @@ const movePolice = (state: BoardState): BoardState => {
   state.police.forEach(police => {
     let closestPlayer: Meeple | null = null;
     let minDistance = Infinity;
+    const detectionRange = 8;
     
     state.players.forEach(player => {
       if (!player.arrested && !player.escaped) {
         const distance = Math.abs(player.position.row - police.row) + 
                          Math.abs(player.position.col - police.col);
-        if (distance < minDistance) {
+        
+        if (distance < minDistance && distance <= detectionRange) {
           minDistance = distance;
           closestPlayer = player;
         }
@@ -521,7 +529,7 @@ const movePolice = (state: BoardState): BoardState => {
     
     let newPos = { ...police };
     
-    if (closestPlayer) {
+    if (closestPlayer && Math.random() < 0.8) {
       const possibleMoves: Position[] = [];
       
       if (closestPlayer.position.row < police.row) {
@@ -548,6 +556,25 @@ const movePolice = (state: BoardState): BoardState => {
       if (validMoves.length > 0) {
         const randomIndex = Math.floor(Math.random() * validMoves.length);
         newPos = validMoves[randomIndex];
+      }
+    } else {
+      const randomMoves = [
+        { row: police.row - 1, col: police.col },
+        { row: police.row + 1, col: police.col },
+        { row: police.row, col: police.col - 1 },
+        { row: police.row, col: police.col + 1 }
+      ].filter(pos => 
+        pos.row >= 0 && pos.row < BOARD_SIZE && 
+        pos.col >= 0 && pos.col < BOARD_SIZE &&
+        newCells[pos.row][pos.col].type !== "entrance" &&
+        newCells[pos.row][pos.col].type !== "exit" &&
+        !newState.police.some(p => p.row === pos.row && p.col === pos.col) &&
+        !newPolicePositions.some(p => p.row === pos.row && p.col === pos.col)
+      );
+      
+      if (randomMoves.length > 0) {
+        const randomIndex = Math.floor(Math.random() * randomMoves.length);
+        newPos = randomMoves[randomIndex];
       }
     }
     
@@ -1085,4 +1112,12 @@ export const useGame = () => {
     throw new Error("useGame must be used within a GameProvider");
   }
   return context;
+};
+
+const isNearExit = (pos: Position, exits: Position[], distance: number): boolean => {
+  return exits.some(exit => {
+    const dx = Math.abs(exit.row - pos.row);
+    const dy = Math.abs(exit.col - pos.col);
+    return dx + dy <= distance;
+  });
 };
