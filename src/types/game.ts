@@ -1,3 +1,4 @@
+
 export type Team = "creeps" | "italian" | "politicians" | "japanese";
 
 export type CellType = "path" | "exit" | "police" | "granny" | "empty" | "city" | "library" | "school" | "townhall" | "entrance" | "puppy";
@@ -22,6 +23,41 @@ export interface Square {
   occupiedBy?: string; // player id
   size?: number; // For landmarks like city, library, etc.
   connectedTo?: Position; // For entrances/exits within buildings
+}
+
+export type CardType = 
+  // General cards
+  | "smoke_bomb"
+  | "shortcut"
+  | "fake_pass"
+  | "distraction"
+  | "switcheroo"
+  // Creeps cards
+  | "dumpster_dive"
+  | "shiv"
+  | "lookout"
+  // Italian cards
+  | "bribe"
+  | "getaway_car"
+  | "cover_story"
+  // Politicians cards
+  | "lobbyist"
+  | "public_statement"
+  | "red_tape"
+  // Japanese cards
+  | "shadow_step"
+  | "meditation"
+  | "honor_bound";
+
+export interface Card {
+  id: string;
+  type: CardType;
+  name: string;
+  description: string;
+  flavor: string;
+  team?: Team; // If undefined, it's a general card
+  used: boolean;
+  icon: string; // Icon name for the card
 }
 
 export interface BoardState {
@@ -51,6 +87,26 @@ export interface BoardState {
   immobilizedPlayers: string[]; // Track players who can't move due to puppies
   previousState: BoardState | null; // To store the state before a move for undo
   canUndo: boolean;
+  cards: {
+    deck: Card[];
+    playerHands: Record<Team, Card[]>;
+    activeEffects: {
+      policeIgnore: string[]; // IDs of players immune to police
+      grannyIgnore: string[]; // IDs of players who can pass through grannies
+      policeImmobilized: boolean; // Police can't move
+      policeExpansionDelay: boolean; // Police don't expand this round
+      moveDiagonally: string | null; // ID of player who can move diagonally
+      puppyImmunity: Position[]; // Positions of puppies that don't distract
+      policeMoveLimited: boolean; // Police can't move more than 1 space
+      skippedPlayers: string[]; // IDs of players who skip next turn
+    };
+    justDrawn: Card | null; // Card just drawn at the start of the turn
+    tradingOffer: {
+      from: Team | null;
+      to: Team | null;
+      card: Card | null;
+    };
+  };
 }
 
 export type GameAction = 
@@ -62,4 +118,10 @@ export type GameAction =
   | { type: "NEXT_TURN" }
   | { type: "START_GAME"; teams: Team[] }
   | { type: "RESET_GAME" }
-  | { type: "PLAYER_CAUGHT"; playerId: string };
+  | { type: "PLAYER_CAUGHT"; playerId: string }
+  | { type: "DRAW_CARD" }
+  | { type: "USE_CARD"; cardId: string; targetId?: string; position?: Position }
+  | { type: "KEEP_CARD" }
+  | { type: "OFFER_TRADE"; fromTeam: Team; toTeam: Team; cardId: string }
+  | { type: "ACCEPT_TRADE" }
+  | { type: "DECLINE_TRADE" };

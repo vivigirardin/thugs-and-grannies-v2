@@ -1,9 +1,154 @@
 import React, { createContext, useContext, useReducer } from "react";
-import { BoardState, GameAction, Position, Team, Square, Meeple } from "@/types/game";
+import { BoardState, GameAction, Position, Team, Square, Meeple, Card, CardType } from "@/types/game";
 import { toast } from "@/hooks/use-toast";
+import { v4 as uuidv4 } from 'uuid';
 
 // Initial board size
 const BOARD_SIZE = 20;
+
+// Card definitions
+const CARDS: Omit<Card, 'id' | 'used'>[] = [
+  // General cards
+  { 
+    type: "smoke_bomb", 
+    name: "Smoke Bomb", 
+    description: "Avoid detection this turn. Police can't catch you.", 
+    flavor: "Now you see me… now you don't.",
+    icon: "bomb"
+  },
+  { 
+    type: "shortcut", 
+    name: "Shortcut", 
+    description: "Move diagonally once this turn, even if normally not allowed.", 
+    flavor: "Found a crack in the fence.",
+    icon: "arrow-right"
+  },
+  { 
+    type: "fake_pass", 
+    name: "Fake Pass", 
+    description: "Pass through a granny square once this turn.", 
+    flavor: "Nice old lady. Didn't even notice.",
+    icon: "user-minus-2"
+  },
+  { 
+    type: "distraction", 
+    name: "Distraction", 
+    description: "Choose one puppy – it doesn't distract anyone this round.", 
+    flavor: "Squirrel!",
+    icon: "dog"
+  },
+  { 
+    type: "switcheroo", 
+    name: "Switcheroo", 
+    description: "Swap any two of your gang members on the board.", 
+    flavor: "You take the left, I'll take the right.",
+    icon: "switch-camera"
+  },
+  
+  // Creeps cards
+  { 
+    type: "dumpster_dive", 
+    name: "Dumpster Dive", 
+    description: "Hide in place for a turn – police and puppies ignore you.", 
+    flavor: "Not glamorous, but it works.",
+    team: "creeps",
+    icon: "user-minus-2"
+  },
+  { 
+    type: "shiv", 
+    name: "Shiv", 
+    description: "Push an adjacent police officer back one space.", 
+    flavor: "He'll think twice next time.",
+    team: "creeps",
+    icon: "sword"
+  },
+  { 
+    type: "lookout", 
+    name: "Lookout", 
+    description: "See where the puppies will move next round before anyone else.", 
+    flavor: "Eyes everywhere.",
+    team: "creeps",
+    icon: "eye"
+  },
+  
+  // Italian cards
+  { 
+    type: "bribe", 
+    name: "Bribe", 
+    description: "Delay police movement for one round.", 
+    flavor: "Everyone's got a price.",
+    team: "italian",
+    icon: "dollar-sign"
+  },
+  { 
+    type: "getaway_car", 
+    name: "Getaway Car", 
+    description: "Move two gang members, 1 space each.", 
+    flavor: "Hop in!",
+    team: "italian",
+    icon: "car"
+  },
+  { 
+    type: "cover_story", 
+    name: "Cover Story", 
+    description: "One gang member can move through 1 police square.", 
+    flavor: "He's with me.",
+    team: "italian",
+    icon: "user"
+  },
+  
+  // Politicians cards
+  { 
+    type: "lobbyist", 
+    name: "Lobbyist", 
+    description: "Police delay their expansion by one round.", 
+    flavor: "We're postponing this due to a press conference.",
+    team: "politicians",
+    icon: "clipboard-list"
+  },
+  { 
+    type: "public_statement", 
+    name: "Public Statement", 
+    description: "Choose 1 opponent's gang member to skip their next turn.", 
+    flavor: "That's a scandal waiting to happen.",
+    team: "politicians",
+    icon: "speaker-off"
+  },
+  { 
+    type: "red_tape", 
+    name: "Red Tape", 
+    description: "Police can't move more than 1 space this round.", 
+    flavor: "We'll need a permit for that...",
+    team: "politicians",
+    icon: "file-warning"
+  },
+  
+  // Japanese cards
+  { 
+    type: "shadow_step", 
+    name: "Shadow Step", 
+    description: "Move through 1 granny square this turn.", 
+    flavor: "No sound. No trace.",
+    team: "japanese",
+    icon: "notepad-text"
+  },
+  { 
+    type: "meditation", 
+    name: "Meditation", 
+    description: "Reroll your dice once this turn.", 
+    flavor: "Still the mind. Try again.",
+    team: "japanese",
+    icon: "dice-5"
+  },
+  { 
+    type: "honor_bound", 
+    name: "Honor Bound", 
+    description: "If a gang member is caught, immediately move another one 3 spaces.", 
+    flavor: "Their sacrifice won't be in vain.",
+    team: "japanese",
+    icon: "fist"
+  },
+];
 
 // Initial game state
 const initialState: BoardState = {
@@ -42,6 +187,31 @@ const initialState: BoardState = {
   immobilizedPlayers: [],
   previousState: null,
   canUndo: false,
+  cards: {
+    deck: [],
+    playerHands: {
+      creeps: [],
+      italian: [],
+      politicians: [],
+      japanese: [],
+    },
+    activeEffects: {
+      policeIgnore: [],
+      grannyIgnore: [],
+      policeImmobilized: false,
+      policeExpansionDelay: false,
+      moveDiagonally: null,
+      puppyImmunity: [],
+      policeMoveLimited: false,
+      skippedPlayers: [],
+    },
+    justDrawn: null,
+    tradingOffer: {
+      from: null,
+      to: null,
+      card: null,
+    },
+  },
 };
 
 // Define landmark properties
@@ -287,6 +457,41 @@ const generateInitialBoard = (teams: Team[]): BoardState => {
   
   state.puppies = puppies;
   
+  // Initialize the card deck
+  const deck = createCardDeck();
+  const playerHands: Record<Team, Card[]> = {
+    creeps: [],
+    italian: [],
+    politicians: [],
+    japanese: [],
+  };
+  
+  // Only initialize hands for teams in the game
+  teams.forEach(team => {
+    playerHands[team] = [];
+  });
+  
+  state.cards = {
+    deck,
+    playerHands,
+    activeEffects: {
+      policeIgnore: [],
+      grannyIgnore: [],
+      policeImmobilized: false,
+      policeExpansionDelay: false,
+      moveDiagonally: null,
+      puppyImmunity: [],
+      policeMoveLimited: false,
+      skippedPlayers: [],
+    },
+    justDrawn: null,
+    tradingOffer: {
+      from: null,
+      to: null,
+      card: null,
+    },
+  };
+  
   state.gameStatus = "playing";
   state.turnCount = 0;
   state.activeMeeple = null;
@@ -295,850 +500,493 @@ const generateInitialBoard = (teams: Team[]): BoardState => {
   return state;
 };
 
-const checkForPlayerCapture = (state: BoardState, newPolicePositions: Position[]): BoardState => {
-  const newState = { ...state };
-  let playerCaptured = false;
+// Create a deck of cards
+const createCardDeck = (): Card[] => {
+  const deck: Card[] = [];
   
-  newState.players = state.players.map(player => {
-    if (player.arrested || player.escaped) return player;
-    
-    const isOnPolice = newPolicePositions.some(
-      pos => pos.row === player.position.row && pos.col === player.position.col
-    );
-    
-    if (isOnPolice) {
-      playerCaptured = true;
-      toast({
-        title: "Player Caught!",
-        description: `A ${player.team} player was caught by the police!`,
-        variant: "destructive"
+  // Add 3 copies of each general card
+  CARDS.filter(card => !card.team).forEach(cardTemplate => {
+    for (let i = 0; i < 3; i++) {
+      deck.push({
+        ...cardTemplate,
+        id: uuidv4(),
+        used: false,
       });
-      return { ...player, arrested: true };
     }
-    return player;
   });
   
-  if (playerCaptured) {
-    newState.jailedPlayers = newState.players.filter(p => p.arrested);
-    
-    newState.players.forEach(player => {
-      if (player.arrested && !state.players.find(p => p.id === player.id)?.arrested) {
-        const { row, col } = player.position;
-        newState.cells[row][col] = {
-          ...newState.cells[row][col],
-          occupied: false,
-          occupiedBy: undefined
-        };
-      }
-    });
-  }
+  // Add 2 copies of each team-specific card
+  CARDS.filter(card => card.team).forEach(cardTemplate => {
+    for (let i = 0; i < 2; i++) {
+      deck.push({
+        ...cardTemplate,
+        id: uuidv4(),
+        used: false,
+      });
+    }
+  });
   
-  return newState;
+  // Shuffle the deck
+  return shuffle(deck);
 };
 
-const addNewPolice = (state: BoardState): BoardState => {
-  const newState = { ...state };
-  
-  const updatedChains = [...state.policeChains];
-  const newPolicePositions: Position[] = [];
-  
-  updatedChains.forEach((chain, chainIndex) => {
-    if (chain.length === 0) return;
-    
-    const lastOfficer = chain[chain.length - 1];
-    
-    const adjacentCells: Position[] = [];
-    const potentialAdjacent = [
-      { row: lastOfficer.row - 1, col: lastOfficer.col },
-      { row: lastOfficer.row + 1, col: lastOfficer.col },
-      { row: lastOfficer.row, col: lastOfficer.col - 1 },
-      { row: lastOfficer.row, col: lastOfficer.col + 1 },
-    ];
-    
-    potentialAdjacent.forEach(pos => {
-      if (pos.row >= 0 && pos.row < BOARD_SIZE && 
-          pos.col >= 0 && pos.col < BOARD_SIZE &&
-          state.cells[pos.row][pos.col].type === "path" &&
-          !state.cells[pos.row][pos.col].occupied &&
-          !isNearExit(pos, state.exits, 3) &&
-          !state.exits.some(exit => exit.row === pos.row && exit.col === pos.col)) {
-        adjacentCells.push(pos);
-      }
-    });
-    
-    if (adjacentCells.length === 0) {
-      const nearbyPositions = [];
-      for (let r = Math.max(0, lastOfficer.row - 2); r <= Math.min(BOARD_SIZE - 1, lastOfficer.row + 2); r++) {
-        for (let c = Math.max(0, lastOfficer.col - 2); c <= Math.min(BOARD_SIZE - 1, lastOfficer.col + 2); c++) {
-          if (r !== lastOfficer.row || c !== lastOfficer.col) {
-            if (state.cells[r][c].type === "path" && !state.cells[r][c].occupied &&
-                !isNearExit({row: r, col: c}, state.exits, 3) &&
-                !state.exits.some(exit => exit.row === r && exit.col === c)) {
-              nearbyPositions.push({ row: r, col: c });
-            }
-          }
-        }
-      }
-      
-      const policeToAdd = Math.min(2, nearbyPositions.length);
-      
-      for (let i = 0; i < policeToAdd && nearbyPositions.length > 0; i++) {
-        const randomIndex = Math.floor(Math.random() * nearbyPositions.length);
-        const newPos = nearbyPositions[randomIndex];
-        nearbyPositions.splice(randomIndex, 1);
-        
-        newPolicePositions.push(newPos);
-        updatedChains[chainIndex] = [...updatedChains[chainIndex], newPos];
-      }
-    } else {
-      const policeToAdd = Math.min(2, adjacentCells.length);
-      
-      for (let i = 0; i < policeToAdd && adjacentCells.length > 0; i++) {
-        const randomIndex = Math.floor(Math.random() * adjacentCells.length);
-        const newPos = adjacentCells[randomIndex];
-        adjacentCells.splice(randomIndex, 1);
-        
-        newPolicePositions.push(newPos);
-        updatedChains[chainIndex] = [...updatedChains[chainIndex], newPos];
-      }
-    }
-  });
-  
-  newState.cells = [...state.cells];
-  newPolicePositions.forEach(pos => {
-    newState.cells[pos.row] = [...state.cells[pos.row]];
-    newState.cells[pos.row][pos.col] = {
-      ...state.cells[pos.row][pos.col],
-      type: "police"
-    };
-  });
-  
-  newState.policeChains = updatedChains;
-  newState.police = [...state.police, ...newPolicePositions];
-  
-  return checkForPlayerCapture(newState, newPolicePositions);
+// Fisher-Yates shuffle algorithm
+const shuffle = <T,>(array: T[]): T[] => {
+  const newArray = [...array];
+  for (let i = newArray.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
+  }
+  return newArray;
 };
 
-const addNewGrannies = (state: BoardState): BoardState => {
+const drawCard = (state: BoardState): BoardState => {
   const newState = { ...state };
+  const currentTeam = state.players[state.currentPlayer].team;
   
-  const emptyCells: Position[] = [];
-  
-  for (let row = 0; row < BOARD_SIZE; row++) {
-    for (let col = 0; col < BOARD_SIZE; col++) {
-      const cell = state.cells[row][col];
-      if (cell.type === "path" && !cell.occupied) {
-        emptyCells.push({ row, col });
-      }
-    }
-  }
-  
-  if (emptyCells.length === 0) {
+  if (state.cards.deck.length === 0) {
+    toast({
+      title: "Deck Empty",
+      description: "No more cards left in the deck!",
+    });
     return state;
   }
   
-  const newGrannyPositions: Position[] = [];
-  for (let i = 0; i < 3; i++) {
-    if (emptyCells.length === 0) break;
-    
-    const randomIndex = Math.floor(Math.random() * emptyCells.length);
-    newGrannyPositions.push(emptyCells[randomIndex]);
-    
-    emptyCells.splice(randomIndex, 1);
+  // Draw the top card
+  const [drawnCard, ...remainingDeck] = state.cards.deck;
+  
+  newState.cards = {
+    ...state.cards,
+    deck: remainingDeck,
+    justDrawn: drawnCard,
+  };
+  
+  toast({
+    title: "Card Drawn",
+    description: `You drew: ${drawnCard.name}`,
+  });
+  
+  return newState;
+};
+
+const keepCard = (state: BoardState): BoardState => {
+  if (!state.cards.justDrawn) {
+    return state;
   }
   
-  newState.grannies = [...state.grannies, ...newGrannyPositions];
+  const currentTeam = state.players[state.currentPlayer].team;
+  const drawnCard = state.cards.justDrawn;
   
-  newState.cells = [...state.cells];
-  newGrannyPositions.forEach(pos => {
-    newState.cells[pos.row] = [...state.cells[pos.row]];
-    newState.cells[pos.row][pos.col] = {
-      ...state.cells[pos.row][pos.col],
-      type: "granny"
-    };
-  });
+  // Add the drawn card to the player's hand
+  const newHands = { ...state.cards.playerHands };
+  newHands[currentTeam] = [...newHands[currentTeam], drawnCard];
   
-  return newState;
+  return {
+    ...state,
+    cards: {
+      ...state.cards,
+      playerHands: newHands,
+      justDrawn: null,
+    },
+  };
 };
 
-const moveGrannies = (state: BoardState): BoardState => {
-  const newState = { ...state };
-  const newCells = JSON.parse(JSON.stringify(state.cells));
-  const newGrannies: Position[] = [];
+const useCard = (state: BoardState, cardId: string, targetId?: string, position?: Position): BoardState => {
+  const currentTeam = state.players[state.currentPlayer].team;
+  const cardIndex = state.cards.playerHands[currentTeam].findIndex(card => card.id === cardId);
   
-  state.grannies.forEach(granny => {
-    const possibleMoves: Position[] = [
-      { row: granny.row - 1, col: granny.col },
-      { row: granny.row + 1, col: granny.col },
-      { row: granny.row, col: granny.col - 1 },
-      { row: granny.row, col: granny.col + 1 },
-    ].filter(pos => 
-      pos.row >= 0 && pos.row < BOARD_SIZE && 
-      pos.col >= 0 && pos.col < BOARD_SIZE &&
-      newCells[pos.row][pos.col].type === "path" &&
-      !newCells[pos.row][pos.col].occupied
-    );
-    
-    let newPos: Position;
-    if (possibleMoves.length > 0) {
-      const randomIndex = Math.floor(Math.random() * possibleMoves.length);
-      newPos = possibleMoves[randomIndex];
-      
-      newCells[granny.row][granny.col] = {
-        ...newCells[granny.row][granny.col],
-        type: "path"
-      };
-      
-      newCells[newPos.row][newPos.col] = {
-        ...newCells[newPos.row][newPos.col],
-        type: "granny"
-      };
-    } else {
-      newPos = { ...granny };
+  if (cardIndex === -1) {
+    // Check if it's the just drawn card
+    if (state.cards.justDrawn?.id === cardId) {
+      return useJustDrawnCard(state, targetId, position);
     }
-    
-    newGrannies.push(newPos);
-  });
+    return state;
+  }
   
-  newState.grannies = newGrannies;
-  newState.cells = newCells;
+  const card = state.cards.playerHands[currentTeam][cardIndex];
+  let newState = { ...state };
   
-  return newState;
-};
-
-const movePolice = (state: BoardState): BoardState => {
-  const newState = { ...state };
-  const newCells = JSON.parse(JSON.stringify(state.cells));
-  const newPolicePositions: Position[] = [];
-  const playersCaught: Meeple[] = [];
-  
-  state.police.forEach(police => {
-    let closestPlayer: Meeple | null = null;
-    let minDistance = Infinity;
-    const detectionRange = 8;
-    
-    state.players.forEach(player => {
-      if (!player.arrested && !player.escaped) {
-        const distance = Math.abs(player.position.row - police.row) + 
-                         Math.abs(player.position.col - police.col);
-        
-        if (distance < minDistance && distance <= detectionRange) {
-          minDistance = distance;
-          closestPlayer = player;
-        }
-      }
-    });
-    
-    let newPos = { ...police };
-    
-    if (closestPlayer && Math.random() < 0.8) {
-      const possibleMoves: Position[] = [];
+  // Process card effects
+  switch (card.type) {
+    case "smoke_bomb":
+      // Implement smoke bomb effect - police ignore this player
+      const playerIds = state.players
+        .filter(p => p.team === currentTeam && !p.arrested && !p.escaped)
+        .map(p => p.id);
       
-      if (closestPlayer.position.row < police.row) {
-        possibleMoves.push({ row: police.row - 1, col: police.col });
-      } else if (closestPlayer.position.row > police.row) {
-        possibleMoves.push({ row: police.row + 1, col: police.col });
-      }
+      newState.cards.activeEffects.policeIgnore = [
+        ...newState.cards.activeEffects.policeIgnore,
+        ...playerIds
+      ];
       
-      if (closestPlayer.position.col < police.col) {
-        possibleMoves.push({ row: police.row, col: police.col - 1 });
-      } else if (closestPlayer.position.col > police.col) {
-        possibleMoves.push({ row: police.row, col: police.col + 1 });
-      }
-      
-      const validMoves = possibleMoves.filter(pos => 
-        pos.row >= 0 && pos.row < BOARD_SIZE && 
-        pos.col >= 0 && pos.col < BOARD_SIZE &&
-        newCells[pos.row][pos.col].type !== "entrance" &&
-        newCells[pos.row][pos.col].type !== "exit" &&
-        !newState.police.some(p => p.row === pos.row && p.col === pos.col) &&
-        !newPolicePositions.some(p => p.row === pos.row && p.col === pos.col)
-      );
-      
-      if (validMoves.length > 0) {
-        const randomIndex = Math.floor(Math.random() * validMoves.length);
-        newPos = validMoves[randomIndex];
-      }
-    } else {
-      const randomMoves = [
-        { row: police.row - 1, col: police.col },
-        { row: police.row + 1, col: police.col },
-        { row: police.row, col: police.col - 1 },
-        { row: police.row, col: police.col + 1 }
-      ].filter(pos => 
-        pos.row >= 0 && pos.row < BOARD_SIZE && 
-        pos.col >= 0 && pos.col < BOARD_SIZE &&
-        newCells[pos.row][pos.col].type !== "entrance" &&
-        newCells[pos.row][pos.col].type !== "exit" &&
-        !newState.police.some(p => p.row === pos.row && p.col === pos.col) &&
-        !newPolicePositions.some(p => p.row === pos.row && p.col === pos.col)
-      );
-      
-      if (randomMoves.length > 0) {
-        const randomIndex = Math.floor(Math.random() * randomMoves.length);
-        newPos = randomMoves[randomIndex];
-      }
-    }
-    
-    const targetCell = newCells[newPos.row][newPos.col];
-    if (targetCell.occupied) {
-      const player = state.players.find(p => p.id === targetCell.occupiedBy);
-      if (player && !player.arrested && !player.escaped) {
-        playersCaught.push(player);
-      }
-    }
-    
-    newCells[police.row][police.col] = {
-      ...newCells[police.row][police.col],
-      type: "path"
-    };
-    
-    newCells[newPos.row][newPos.col] = {
-      ...newCells[newPos.row][newPos.col],
-      type: "police"
-    };
-    
-    newPolicePositions.push(newPos);
-  });
-  
-  newState.players = state.players.map(player => {
-    if (playersCaught.some(p => p.id === player.id)) {
       toast({
-        title: "Player Caught!",
-        description: `A ${player.team} player was caught by the police!`,
-        variant: "destructive"
+        title: "Card Used",
+        description: "Smoke Bomb: Your team is hidden from police this turn!",
       });
-      return { ...player, arrested: true };
-    }
-    return player;
-  });
-  
-  newState.jailedPlayers = newState.players.filter(p => p.arrested);
-  
-  playersCaught.forEach(player => {
-    const { row, col } = player.position;
-    newCells[row][col] = {
-      ...newCells[row][col],
-      occupied: false,
-      occupiedBy: undefined
-    };
-  });
-  
-  newState.police = newPolicePositions;
-  newState.cells = newCells;
-  
-  return newState;
-};
+      break;
 
-const movePuppies = (state: BoardState): BoardState => {
-  const newState = { ...state };
-  const newCells = JSON.parse(JSON.stringify(state.cells));
-  const newPuppies: Position[] = [];
-  
-  state.puppies.forEach(puppy => {
-    const possibleMoves: Position[] = [
-      { row: puppy.row - 1, col: puppy.col },
-      { row: puppy.row + 1, col: puppy.col },
-      { row: puppy.row, col: puppy.col - 1 },
-      { row: puppy.row, col: puppy.col + 1 },
-    ].filter(pos => 
-      pos.row >= 0 && pos.row < BOARD_SIZE && 
-      pos.col >= 0 && pos.col < BOARD_SIZE &&
-      newCells[pos.row][pos.col].type === "path" &&
-      !newCells[pos.row][pos.col].occupied
-    );
-    
-    let newPos: Position;
-    if (possibleMoves.length > 0) {
-      const randomIndex = Math.floor(Math.random() * possibleMoves.length);
-      newPos = possibleMoves[randomIndex];
-      
-      newCells[puppy.row][puppy.col] = {
-        ...newCells[puppy.row][puppy.col],
-        type: "path"
-      };
-      
-      newCells[newPos.row][newPos.col] = {
-        ...newCells[newPos.row][newPos.col],
-        type: "puppy"
-      };
-    } else {
-      newPos = { ...puppy };
-    }
-    
-    newPuppies.push(newPos);
-  });
-  
-  newState.puppies = newPuppies;
-  newState.cells = newCells;
-  
-  return newState;
-};
-
-const updateImmobilizedPlayers = (state: BoardState): BoardState => {
-  const newState = { ...state };
-  const immobilizedPlayers: string[] = [];
-  
-  state.puppies.forEach(puppy => {
-    const adjacentPositions = [
-      { row: puppy.row - 1, col: puppy.col },
-      { row: puppy.row + 1, col: puppy.col },
-      { row: puppy.row, col: puppy.col - 1 },
-      { row: puppy.row, col: puppy.col + 1 },
-      { row: puppy.row - 1, col: puppy.col - 1 },
-      { row: puppy.row - 1, col: puppy.col + 1 },
-      { row: puppy.row + 1, col: puppy.col - 1 },
-      { row: puppy.row + 1, col: puppy.col + 1 },
-    ];
-    
-    adjacentPositions.forEach(pos => {
-      if (pos.row >= 0 && pos.row < BOARD_SIZE && 
-          pos.col >= 0 && pos.col < BOARD_SIZE) {
-        
-        const cell = state.cells[pos.row][pos.col];
-        if (cell.occupiedBy) {
-          immobilizedPlayers.push(cell.occupiedBy);
-        }
-      }
-    });
-  });
-  
-  newState.immobilizedPlayers = immobilizedPlayers;
-  
-  return newState;
-};
-
-const gameReducer = (state: BoardState, action: GameAction): BoardState => {
-  switch (action.type) {
-    case "ROLL_DICE":
-      return {
-        ...state,
-        diceValue: Math.floor(Math.random() * 6) + 1,
-      };
-    
-    case "SELECT_MEEPLE": {
-      const selectedPlayer = state.players.find(player => player.id === action.playerId);
-      
-      if (!selectedPlayer || 
-          selectedPlayer.team !== state.players[state.currentPlayer].team ||
-          selectedPlayer.arrested || 
-          selectedPlayer.escaped ||
-          state.immobilizedPlayers.includes(selectedPlayer.id)) {
-        
-        if (selectedPlayer && state.immobilizedPlayers.includes(selectedPlayer.id)) {
-          toast({
-            title: "Can't Move!",
-            description: "This meeple is distracted by a nearby puppy 🐶",
-            variant: "destructive"
-          });
-        }
-        
-        return state;
-      }
-      
-      return {
-        ...state,
-        activeMeeple: action.playerId,
-      };
-    }
-      
-    case "DESELECT_MEEPLE":
-      return {
-        ...state,
-        activeMeeple: null,
-      };
-
-    case "MOVE_PLAYER": {
-      const stateBeforeMove = JSON.parse(JSON.stringify(state));
-      delete stateBeforeMove.previousState;
-      
-      const selectedPlayerIndex = state.players.findIndex(p => p.id === state.activeMeeple);
-      if (selectedPlayerIndex === -1) {
-        return state;
-      }
-      
-      const selectedPlayer = state.players[selectedPlayerIndex];
-      const newPosition = action.position;
-      
-      const dx = Math.abs(newPosition.row - selectedPlayer.position.row);
-      const dy = Math.abs(newPosition.col - selectedPlayer.position.col);
-      const distance = dx + dy;
-      
-      const currentCell = state.cells[selectedPlayer.position.row][selectedPlayer.position.col];
-      const targetCell = state.cells[newPosition.row][newPosition.col];
-      
-      let isEntranceMove = false;
-      
-      if (targetCell.type === "entrance" && targetCell.connectedTo) {
-        const connectedPosition = targetCell.connectedTo;
-        const connectedCell = state.cells[connectedPosition.row][connectedPosition.col];
-        
-        if (connectedCell.occupied) {
-          return state;
-        }
-        
-        isEntranceMove = true;
-      } else if (distance > state.diceValue) {
-        return state;
-      }
-      
-      if (targetCell.occupied) {
-        return state;
-      }
-      
-      if (distance > 1 && !isEntranceMove) {
-        const isHorizontalMove = selectedPlayer.position.row === newPosition.row;
-        const isVerticalMove = selectedPlayer.position.col === newPosition.col;
-        
-        let pathBlocked = false;
-        
-        if (isHorizontalMove) {
-          const startCol = Math.min(selectedPlayer.position.col, newPosition.col);
-          const endCol = Math.max(selectedPlayer.position.col, newPosition.col);
-          const row = selectedPlayer.position.row;
-          
-          for (let col = startCol + 1; col < endCol; col++) {
-            if (state.cells[row][col].type === "granny") {
-              pathBlocked = true;
-              break;
-            }
-          }
-        } else {
-          const startRow = Math.min(selectedPlayer.position.row, newPosition.row);
-          const endRow = Math.max(selectedPlayer.position.row, newPosition.row);
-          const col = selectedPlayer.position.col;
-          
-          for (let row = startRow + 1; row < endRow; row++) {
-            if (state.cells[row][col].type === "granny") {
-              pathBlocked = true;
-              break;
-            }
-          }
-        }
-        
-        if (pathBlocked) {
-          toast({
-            title: "Can't Move!",
-            description: "You can't move through a granny. Try going around!",
-            variant: "destructive"
-          });
-          return state;
-        }
-      }
-      
-      if (targetCell.type === "police") {
-        const newPlayers = [...state.players];
-        newPlayers[selectedPlayerIndex] = {
-          ...selectedPlayer,
-          arrested: true,
-        };
-        
-        const newJailedPlayers = [...state.jailedPlayers, newPlayers[selectedPlayerIndex]];
-        
-        const oldPos = selectedPlayer.position;
-        const newCells = [...state.cells];
-        newCells[oldPos.row][oldPos.col] = {
-          ...newCells[oldPos.row][oldPos.col],
-          occupied: false,
-          occupiedBy: undefined,
-        };
+    case "shortcut":
+      // Allow diagonal movement for the active meeple
+      if (state.activeMeeple) {
+        newState.cards.activeEffects.moveDiagonally = state.activeMeeple;
         
         toast({
-          title: "Player Caught!",
-          description: `Your ${selectedPlayer.team} player was caught by the police!`,
-          variant: "destructive"
-        });
-        
-        return {
-          ...state,
-          players: newPlayers,
-          jailedPlayers: newJailedPlayers,
-          cells: newCells,
-          activeMeeple: null,
-          diceValue: 0,
-        };
-      }
-      
-      const isExit = state.exits.some(
-        pos => pos.row === newPosition.row && pos.col === newPosition.col
-      );
-      
-      const newPlayers = [...state.players];
-      
-      const oldPos = selectedPlayer.position;
-      const newCells = [...state.cells];
-      newCells[oldPos.row][oldPos.col] = {
-        ...newCells[oldPos.row][oldPos.col],
-        occupied: false,
-        occupiedBy: undefined,
-      };
-      
-      if (isEntranceMove && targetCell.connectedTo) {
-        const connectedPos = targetCell.connectedTo;
-        
-        newPlayers[selectedPlayerIndex] = {
-          ...selectedPlayer,
-          position: connectedPos,
-        };
-        
-        newCells[connectedPos.row][connectedPos.col] = {
-          ...newCells[connectedPos.row][connectedPos.col],
-          occupied: true,
-          occupiedBy: selectedPlayer.id,
-        };
-        
-        toast({
-          title: "Shortcut Used!",
-          description: `Your ${selectedPlayer.team} player took a building shortcut!`,
+          title: "Card Used",
+          description: "Shortcut: You can move diagonally this turn!",
         });
       } else {
-        newPlayers[selectedPlayerIndex] = {
-          ...selectedPlayer,
-          position: newPosition,
-          escaped: isExit,
-        };
-        
-        if (!isExit) {
-          newCells[newPosition.row][newPosition.col] = {
-            ...newCells[newPosition.row][newPosition.col],
-            occupied: true,
-            occupiedBy: selectedPlayer.id,
-          };
-        } else {
-          toast({
-            title: "Player Escaped!",
-            description: `Your ${selectedPlayer.team} player successfully escaped!`,
-            variant: "default"
-          });
-        }
-      }
-      
-      const remainingTeams = new Set<Team>();
-      for (const player of newPlayers) {
-        if (!player.arrested && !player.escaped) {
-          remainingTeams.add(player.team);
-        }
-      }
-      
-      const allPlayersFinished = remainingTeams.size === 0;
-      
-      let winner: Team | null = null;
-      if (allPlayersFinished) {
-        const escapedCounts: Record<Team, number> = {
-          creeps: 0,
-          italian: 0,
-          politicians: 0,
-          japanese: 0,
-        };
-        
-        for (const player of newPlayers) {
-          if (player.escaped) {
-            escapedCounts[player.team]++;
-          }
-        }
-        
-        let maxEscaped = 0;
-        Object.entries(escapedCounts).forEach(([team, count]) => {
-          if (count > maxEscaped) {
-            maxEscaped = count;
-            winner = team as Team;
-          } else if (count === maxEscaped && maxEscaped > 0) {
-            winner = winner || team as Team;
-          }
+        toast({
+          title: "Select a Meeple",
+          description: "You need to select a meeple to use this card on.",
+          variant: "destructive",
         });
-        
-        if (winner) {
-          toast({
-            title: "Game Over!",
-            description: `The ${winner.charAt(0).toUpperCase() + winner.slice(1)} team wins with ${escapedCounts[winner]} escaped meeples!`,
-            variant: "default"
-          });
-        }
-      }
-      
-      return {
-        ...state,
-        cells: newCells,
-        players: newPlayers,
-        activeMeeple: null,
-        diceValue: 0,
-        gameStatus: allPlayersFinished ? "ended" : "playing",
-        winner,
-        previousState: stateBeforeMove,
-        canUndo: true,
-      };
-    }
-      
-    case "UNDO_MOVE":
-      if (!state.previousState || !state.canUndo) {
         return state;
       }
-      return {
-        ...state.previousState,
-        previousState: null,
-        canUndo: false,
-      };
+      break;
 
-    case "NEXT_TURN": {
-      let nextPlayer = (state.currentPlayer + 1) % state.players.length;
-      const currentTeam = state.players[state.currentPlayer].team;
+    case "fake_pass":
+      // Allow passing through grannies
+      const meepleIds = state.players
+        .filter(p => p.team === currentTeam && !p.arrested && !p.escaped)
+        .map(p => p.id);
       
-      while (state.players[nextPlayer].team === currentTeam) {
-        nextPlayer = (nextPlayer + 1) % state.players.length;
-      }
-      
-      let teamEliminated = true;
-      const nextTeam = state.players[nextPlayer].team;
-      for (const player of state.players) {
-        if (player.team === nextTeam && !player.arrested && !player.escaped) {
-          teamEliminated = false;
-          break;
-        }
-      }
-      
-      if (teamEliminated) {
-        const startingPlayer = nextPlayer;
-        do {
-          nextPlayer = (nextPlayer + 1) % state.players.length;
-          if (nextPlayer === startingPlayer) {
-            return {
-              ...state,
-              gameStatus: "ended",
-            };
-          }
-        } while (state.players.every(p => 
-          p.team === state.players[nextPlayer].team && (p.arrested || p.escaped)
-        ));
-      }
-      
-      const turnCount = nextPlayer <= state.currentPlayer ? state.turnCount + 1 : state.turnCount;
-      
-      let newState = {
-        ...state,
-        currentPlayer: nextPlayer,
-        activeMeeple: null,
-        diceValue: 0,
-        turnCount,
-        previousState: null,
-        canUndo: false,
-      };
-      
-      newState = movePolice(newState);
-      
-      if (turnCount % 2 === 0 && turnCount > 0) {
-        newState = addNewPolice(newState);
-      }
-      
-      if (turnCount % 5 === 0 && turnCount > 0) {
-        newState = addNewGrannies(newState);
-      }
-      
-      if (turnCount % 2 === 0 && turnCount > 0) {
-        newState = moveGrannies(newState);
-      }
-      
-      newState = movePuppies(newState);
-      
-      newState = updateImmobilizedPlayers(newState);
-      
-      return newState;
-    }
-      
-    case "START_GAME": {
-      const newState = generateInitialBoard(action.teams);
-      return {
-        ...newState,
-        diceValue: 0
-      };
-    }
-      
-    case "RESET_GAME": {
-      return {
-        ...initialState,
-        cells: Array(BOARD_SIZE).fill(null).map((_, rowIndex) => 
-          Array(BOARD_SIZE).fill(null).map((_, colIndex) => ({
-            type: "path",
-            position: { row: rowIndex, col: colIndex },
-            occupied: false,
-          }))
-        ),
-      };
-    }
-      
-    case "PLAYER_CAUGHT": {
-      const { playerId } = action;
-      const playerIndex = state.players.findIndex(p => p.id === playerId);
-      
-      if (playerIndex === -1) {
-        return state;
-      }
-      
-      const player = state.players[playerIndex];
-      const newPlayers = [...state.players];
-      newPlayers[playerIndex] = {
-        ...player,
-        arrested: true,
-      };
-      
-      const oldPos = player.position;
-      const newCells = [...state.cells];
-      newCells[oldPos.row][oldPos.col] = {
-        ...newCells[oldPos.row][oldPos.col],
-        occupied: false,
-        occupiedBy: undefined,
-      };
-      
-      const newJailedPlayers = [...state.jailedPlayers, newPlayers[playerIndex]];
+      newState.cards.activeEffects.grannyIgnore = [
+        ...newState.cards.activeEffects.grannyIgnore,
+        ...meepleIds
+      ];
       
       toast({
-        title: "Player Caught!",
-        description: `A ${player.team} player was caught by the police!`,
-        variant: "destructive"
+        title: "Card Used",
+        description: "Fake Pass: Your team can pass through grannies this turn!",
       });
+      break;
+
+    case "distraction":
+      if (!position) {
+        toast({
+          title: "Invalid Target",
+          description: "You need to select a puppy to distract.",
+          variant: "destructive",
+        });
+        return state;
+      }
       
-      return {
-        ...state,
-        players: newPlayers,
-        jailedPlayers: newJailedPlayers,
-        cells: newCells,
-        activeMeeple: null,
-      };
-    }
+      // Make the selected puppy not distract anyone
+      newState.cards.activeEffects.puppyImmunity = [
+        ...newState.cards.activeEffects.puppyImmunity,
+        position
+      ];
+      
+      // Update immobilized players
+      newState = updateImmobilizedPlayers(newState);
+      
+      toast({
+        title: "Card Used",
+        description: "Distraction: The puppy is distracted this round!",
+      });
+      break;
+
+    case "switcheroo":
+      // To be implemented: UI to select two meeples to swap
+      toast({
+        title: "Card Used",
+        description: "Switcheroo: Select two of your meeples to swap positions.",
+      });
+      // This would need additional UI state to track the two meeples being swapped
+      break;
+
+    case "dumpster_dive":
+      if (state.activeMeeple) {
+        newState.cards.activeEffects.policeIgnore = [
+          ...newState.cards.activeEffects.policeIgnore,
+          state.activeMeeple
+        ];
+        
+        // Also ignore puppies for this meeple
+        const selectedPlayer = state.players.find(p => p.id === state.activeMeeple);
+        if (selectedPlayer) {
+          newState.immobilizedPlayers = newState.immobilizedPlayers.filter(
+            id => id !== state.activeMeeple
+          );
+        }
+        
+        toast({
+          title: "Card Used",
+          description: "Dumpster Dive: This meeple can't be caught by police or distracted by puppies this turn.",
+        });
+      } else {
+        toast({
+          title: "Select a Meeple",
+          description: "You need to select a meeple to use this card on.",
+          variant: "destructive",
+        });
+        return state;
+      }
+      break;
+
+    case "shiv":
+      // To be implemented: UI to select an adjacent police officer to push
+      toast({
+        title: "Card Used",
+        description: "Shiv: Select an adjacent police officer to push back.",
+      });
+      // This would need additional UI to select which police to push
+      break;
+
+    case "lookout":
+      // Show where puppies will move (visual indicator only)
+      toast({
+        title: "Card Used",
+        description: "Lookout: You can now see where puppies will move next.",
+      });
+      // This would need a UI change to show the puppy movement prediction
+      break;
+
+    case "bribe":
+      newState.cards.activeEffects.policeImmobilized = true;
+      
+      toast({
+        title: "Card Used",
+        description: "Bribe: Police movement is delayed for one round.",
+      });
+      break;
+
+    case "getaway_car":
+      // To be implemented: UI to select two meeples to move one space each
+      toast({
+        title: "Card Used",
+        description: "Getaway Car: You can move two of your meeples one space each.",
+      });
+      // This would need additional UI state to track the meeples being moved
+      break;
+
+    case "cover_story":
+      if (state.activeMeeple) {
+        // Allow meeple to move through police
+        // This would need changes to the valid move detection logic
+        toast({
+          title: "Card Used",
+          description: "Cover Story: This meeple can move through one police square this turn.",
+        });
+      } else {
+        toast({
+          title: "Select a Meeple",
+          description: "You need to select a meeple to use this card on.",
+          variant: "destructive",
+        });
+        return state;
+      }
+      break;
+
+    case "lobbyist":
+      newState.cards.activeEffects.policeExpansionDelay = true;
+      
+      toast({
+        title: "Card Used",
+        description: "Lobbyist: Police won't expand this round.",
+      });
+      break;
+
+    case "public_statement":
+      if (!targetId) {
+        toast({
+          title: "Invalid Target",
+          description: "You need to select an opponent's meeple.",
+          variant: "destructive",
+        });
+        return state;
+      }
+      
+      newState.cards.activeEffects.skippedPlayers = [
+        ...newState.cards.activeEffects.skippedPlayers,
+        targetId
+      ];
+      
+      toast({
+        title: "Card Used",
+        description: "Public Statement: The selected opponent will skip their next turn.",
+      });
+      break;
+
+    case "red_tape":
+      newState.cards.activeEffects.policeMoveLimited = true;
+      
+      toast({
+        title: "Card Used",
+        description: "Red Tape: Police can't move more than 1 space this round.",
+      });
+      break;
+
+    case "shadow_step":
+      // Similar to fake_pass but for just one meeple
+      if (state.activeMeeple) {
+        newState.cards.activeEffects.grannyIgnore = [
+          ...newState.cards.activeEffects.grannyIgnore,
+          state.activeMeeple
+        ];
+        
+        toast({
+          title: "Card Used",
+          description: "Shadow Step: This meeple can move through a granny square this turn.",
+        });
+      } else {
+        toast({
+          title: "Select a Meeple",
+          description: "You need to select a meeple to use this card on.",
+          variant: "destructive",
+        });
+        return state;
+      }
+      break;
+
+    case "meditation":
+      // Allow rerolling the dice
+      if (state.diceValue > 0) {
+        newState.diceValue = Math.floor(Math.random() * 6) + 1;
+        
+        toast({
+          title: "Card Used",
+          description: `Meditation: You rerolled the dice and got a ${newState.diceValue}!`,
+        });
+      } else {
+        toast({
+          title: "Can't Use Now",
+          description: "You need to roll the dice first.",
+          variant: "destructive",
+        });
+        return state;
+      }
+      break;
+
+    case "honor_bound":
+      // This would be triggered when a player is caught, not used directly
+      toast({
+        title: "Card Used",
+        description: "Honor Bound: If a gang member is caught, another can move 3 spaces.",
+      });
+      break;
       
     default:
+      toast({
+        title: "Card Not Implemented",
+        description: `The ${card.name} card effect is not implemented yet.`,
+        variant: "destructive",
+      });
       return state;
   }
-};
-
-interface GameContextType {
-  state: BoardState;
-  dispatch: React.Dispatch<GameAction>;
-}
-
-const GameContext = createContext<GameContextType | undefined>(undefined);
-
-export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [state, dispatch] = useReducer(gameReducer, initialState);
   
-  return (
-    <GameContext.Provider value={{ state, dispatch }}>
-      {children}
-    </GameContext.Provider>
-  );
+  // Mark the card as used
+  const newPlayerHands = { ...newState.cards.playerHands };
+  const newHand = [...newPlayerHands[currentTeam]];
+  newHand[cardIndex] = { ...newHand[cardIndex], used: true };
+  newPlayerHands[currentTeam] = newHand;
+  
+  return {
+    ...newState,
+    cards: {
+      ...newState.cards,
+      playerHands: newPlayerHands,
+    },
+  };
 };
 
-export const useGame = () => {
-  const context = useContext(GameContext);
-  if (!context) {
-    throw new Error("useGame must be used within a GameProvider");
+const useJustDrawnCard = (state: BoardState, targetId?: string, position?: Position): BoardState => {
+  if (!state.cards.justDrawn) {
+    return state;
   }
-  return context;
+  
+  const currentTeam = state.players[state.currentPlayer].team;
+  const card = state.cards.justDrawn;
+  
+  // Add card to hand first (so we can use the same useCard logic)
+  const withCardInHand = {
+    ...state,
+    cards: {
+      ...state.cards,
+      playerHands: {
+        ...state.cards.playerHands,
+        [currentTeam]: [...state.cards.playerHands[currentTeam], card]
+      },
+      justDrawn: null,
+    }
+  };
+  
+  // Now use the card
+  return useCard(withCardInHand, card.id, targetId, position);
 };
 
-const isNearExit = (pos: Position, exits: Position[], distance: number): boolean => {
-  return exits.some(exit => {
-    const dx = Math.abs(exit.row - pos.row);
-    const dy = Math.abs(exit.col - pos.col);
-    return dx + dy <= distance;
-  });
+// Create a trading offer
+const offerTrade = (state: BoardState, fromTeam: Team, toTeam: Team, cardId: string): BoardState => {
+  const card = state.cards.playerHands[fromTeam].find(c => c.id === cardId);
+  
+  if (!card) {
+    return state;
+  }
+  
+  return {
+    ...state,
+    cards: {
+      ...state.cards,
+      tradingOffer: {
+        from: fromTeam,
+        to: toTeam,
+        card,
+      },
+    },
+  };
 };
+
+// Accept a trade offer
+const acceptTrade = (state: BoardState): BoardState => {
+  const { from, to, card } = state.cards.tradingOffer;
+  
+  if (!from || !to || !card) {
+    return state;
+  }
+  
+  // Remove card from offering player's hand
+  const fromHand = state.cards.playerHands[from].filter(c => c.id !== card.id);
+  
+  // Add card to receiving player's hand
+  const toHand = [...state.cards.playerHands[to], card];
+  
+  toast({
+    title: "Trade Accepted",
+    description: `${to} team received ${card.name} from ${from} team.`,
+  });
+  
+  return {
+    ...state,
+    cards: {
+      ...state.cards,
+      playerHands: {
+        ...state.cards.playerHands,
+        [from]: fromHand,
+        [to]: toHand,
+      },
+      tradingOffer: {
+        from: null,
+        to: null,
+        card: null,
+      },
+    },
+  };
+};
+
+// Decline a trade offer
+const declineTrade = (state: BoardState): BoardState => {
+  toast({
+    title: "Trade Declined",
+    description: "The trade offer was declined.",
+  });
+  
+  return {
+    ...state,
+    cards: {
+      ...state.cards,
+      tradingOffer: {
+        from: null,
+        to: null,
+        card: null,
+      },
+    },

@@ -6,6 +6,7 @@ import GameBoard from "./game/GameBoard";
 import TeamSelector from "./game/TeamSelector";
 import GameRules from "./game/GameRules";
 import GameControls from "./game/GameControls";
+import CardManager from "./game/CardManager";
 import "./game/GameStyles.css"; // Import game styles for dice animation
 
 const GameContainer: React.FC = () => {
@@ -17,6 +18,9 @@ const GameContainer: React.FC = () => {
         <div className={`${isMobile ? "w-full" : ""} overflow-auto max-w-full`}>
           <GameControls />
           <GameBoard />
+        </div>
+        <div className={`${isMobile ? "w-full" : ""} mt-2`}>
+          <CardManager />
         </div>
         <div className={`${isMobile ? "w-full" : ""} mt-2`}>
           <TeamSelector />
