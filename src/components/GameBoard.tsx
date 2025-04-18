@@ -269,7 +269,7 @@ const GameBoard: React.FC = () => {
         </div>
       )}
 
-      {hasEscapedMeeples && (
+      {Object.values(escapedMeeplesByTeam).some(count => count > 0) && (
         <div className="escaped-meeples mt-4">
           <div className="flex items-center mb-2">
             <div className="w-6 h-6 mr-2 flex items-center justify-center text-white">
