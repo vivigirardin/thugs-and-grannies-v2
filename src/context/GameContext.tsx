@@ -990,3 +990,16 @@ const declineTrade = (state: BoardState): BoardState => {
         card: null,
       },
     },
+  };
+};
+
+export { 
+  initialState, 
+  generateInitialBoard, 
+  drawCard, 
+  keepCard, 
+  useCard, 
+  offerTrade, 
+  acceptTrade, 
+  declineTrade 
+};
