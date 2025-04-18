@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card as CardType } from "@/types/game";
 import { 
@@ -12,7 +11,7 @@ import {
 import { 
   Bomb, ArrowRight, UserMinus2, Dog, SwitchCamera, 
   Sword, Eye, DollarSign, Car, User, ClipboardList, 
-  Speaker, FileWarning, FileText, Dice5, Fist 
+  Speaker, FileWarning, FileText, Dice5 
 } from "lucide-react";
 
 interface GameCardProps {
@@ -34,11 +33,11 @@ const getCardIcon = (iconName: string) => {
     case "car": return <Car className="w-4 h-4" />;
     case "user": return <User className="w-4 h-4" />;
     case "clipboard-list": return <ClipboardList className="w-4 h-4" />;
-    case "speaker-off": return <Speaker className="w-4 h-4" />; // Changed from SpeakerOff to Speaker
+    case "speaker-off": return <Speaker className="w-4 h-4" />;
     case "file-warning": return <FileWarning className="w-4 h-4" />;
-    case "notepad-text": return <FileText className="w-4 h-4" />; // Changed from NotepadText to FileText
+    case "notepad-text": return <FileText className="w-4 h-4" />;
     case "dice-5": return <Dice5 className="w-4 h-4" />;
-    case "fist": return <User className="w-4 h-4" />; // Changed from Fist to User
+    case "fist": return <User className="w-4 h-4" />;
     default: return null;
   }
 };
