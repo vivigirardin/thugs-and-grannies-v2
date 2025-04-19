@@ -24,10 +24,10 @@ const CardManager: React.FC = () => {
   const [targetPlayer, setTargetPlayer] = useState<string | null>(null);
 
   const handleDrawCard = () => {
-    if (state.diceValue > 0) {
+    if (state.diceValue === 0) {
       toast({
         title: "Can't Draw Now",
-        description: "You need to complete your movement first.",
+        description: "You need to roll the dice first.",
         variant: "destructive",
       });
       return;
@@ -207,3 +207,4 @@ const CardManager: React.FC = () => {
 };
 
 export default CardManager;
+
