@@ -197,6 +197,17 @@ const GameBoard: React.FC = () => {
     }
   };
 
+  const handleEndTurn = () => {
+    if (state.gameStatus !== "playing") return;
+    
+    toast({
+      title: "Turn Ended",
+      description: `${currentTeam}'s turn has ended.`,
+    });
+    
+    dispatch({ type: "NEXT_TURN" });
+  };
+
   React.useEffect(() => {
     if (state.gameStatus === "playing" && state.diceValue === 0) {
       setShowTurnDialog(true);

@@ -5,7 +5,7 @@ import { Position, Team } from "@/types/game";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Trophy } from "lucide-react";
-import { toast } from "@/components/ui/toast";
+import { toast } from "@/hooks/use-toast";
 
 const GameBoard: React.FC = () => {
   const { state, dispatch } = useGame();
@@ -14,7 +14,6 @@ const GameBoard: React.FC = () => {
     ? state.players.find(p => p.id === state.activeMeeple) 
     : null;
 
-  // Record of escaped meeples by team
   const escapedMeeplesByTeam = React.useMemo(() => {
     const escaped: Record<Team, number> = {
       gang: 0,
@@ -32,7 +31,6 @@ const GameBoard: React.FC = () => {
     return escaped;
   }, [state.players]);
   
-  // Determine the team with most escaped meeples
   const mostEscapedMeeples = React.useMemo(() => {
     let maxTeam: Team | null = null;
     let maxCount = 0;
@@ -54,7 +52,6 @@ const GameBoard: React.FC = () => {
       return;
     }
 
-    // If we have a selected meeple and dice is rolled, try to move
     if (selectedMeeple && state.diceValue > 0 && !selectedMeeple.arrested && !selectedMeeple.escaped) {
       if (!state.cards.justDrawn && state.cards.playerHands[currentTeam || ""]?.length === 0) {
         toast({
@@ -65,15 +62,12 @@ const GameBoard: React.FC = () => {
         return;
       }
       
-      // Check if this is an entrance
       const targetCell = state.cells[position.row][position.col];
       if (targetCell.type === "entrance" && targetCell.connectedTo) {
-        // Special case for entrances - can move regardless of dice value
         dispatch({ type: "MOVE_PLAYER", position });
         return;
       }
       
-      // Regular move - check distance
       const dx = Math.abs(position.row - selectedMeeple.position.row);
       const dy = Math.abs(position.col - selectedMeeple.position.col);
       const distance = dx + dy;
@@ -84,7 +78,6 @@ const GameBoard: React.FC = () => {
       return;
     }
 
-    // If dice is rolled but no meeple is selected, check if there's a meeple to select
     if (state.diceValue > 0) {
       const cell = state.cells[position.row][position.col];
       if (cell.occupiedBy) {
@@ -108,12 +101,10 @@ const GameBoard: React.FC = () => {
     
     const cell = state.cells[rowIndex][colIndex];
     
-    // Special case for entrances - can always use them
     if (cell.type === "entrance" && !cell.occupied) {
       return true;
     }
     
-    // Can't move to occupied cells or cells with police or grannies
     if (cell.occupied || cell.type === "police" || cell.type === "granny" || (cell.type !== "path" && cell.type !== "exit")) {
       return false;
     }

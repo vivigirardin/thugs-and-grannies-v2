@@ -2,9 +2,9 @@
 import React from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useGame } from "@/context/GameContext";
-import DiceControl from "./controls/DiceControl";
-import EndTurnButton from "./controls/EndTurnButton";
-import TurnIndicatorDialog from "./controls/TurnIndicatorDialog";
+import DiceControl from "./DiceControl";
+import EndTurnButton from "./EndTurnButton";
+import TurnIndicatorDialog from "./TurnIndicatorDialog";
 
 const GameControls: React.FC = () => {
   const { state } = useGame();
@@ -26,4 +26,3 @@ const GameControls: React.FC = () => {
 };
 
 export default GameControls;
-
