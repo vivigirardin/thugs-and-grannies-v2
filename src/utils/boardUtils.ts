@@ -1,4 +1,5 @@
-import { BoardState, Position, Square } from "@/types/game";
+
+import { BoardState, Position, Square, Team } from "@/types/game";
 import { generateSingleCard } from "./cardUtils";
 
 const BOARD_SIZE = 20;
@@ -69,7 +70,7 @@ const generateTownhall = (position: Position): Square => ({
   position,
 });
 
-const generateInitialBoard = (): BoardState => {
+export const generateInitialBoard = (teams?: Team[]): BoardState => {
   let cells: Square[][] = Array.from({ length: BOARD_SIZE }, (_, row) =>
     Array.from({ length: BOARD_SIZE }, (_, col) => ({
       type: Math.random() < PATH_DENSITY ? "path" : "city",

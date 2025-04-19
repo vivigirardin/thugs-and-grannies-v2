@@ -3,6 +3,17 @@ import { v4 as uuidv4 } from 'uuid';
 import { Card, Team, BoardState } from '@/types/game';
 import { CARDS } from '@/data/cardData';
 
+export const generateSingleCard = (index: number): Card => {
+  // Use modulo to cycle through the card templates
+  const cardTemplate = CARDS[index % CARDS.length];
+  
+  return {
+    ...cardTemplate,
+    id: uuidv4(),
+    used: false,
+  };
+};
+
 export const createCardDeck = (): Card[] => {
   const deck: Card[] = [];
   
