@@ -848,7 +848,7 @@ const useCard = (state: BoardState, cardId: string, targetId?: string, position?
   
   const newPlayerHands = { ...newState.cards.playerHands };
   const newHand = [...newPlayerHands[currentTeam]];
-  newHand[cardIndex] = { ...newHand[cardIndex], used: true };
+  newHand.splice(cardIndex, 1);
   newPlayerHands[currentTeam] = newHand;
   
   return {
@@ -868,19 +868,15 @@ const useJustDrawnCard = (state: BoardState, targetId?: string, position?: Posit
   const currentTeam = state.players[state.currentPlayer].team;
   const card = state.cards.justDrawn;
   
-  const withCardInHand = {
+  const newState = useCard({
     ...state,
     cards: {
       ...state.cards,
-      playerHands: {
-        ...state.cards.playerHands,
-        [currentTeam]: [...state.cards.playerHands[currentTeam], card]
-      },
       justDrawn: null,
     }
-  };
+  }, card.id, targetId, position);
   
-  return useCard(withCardInHand, card.id, targetId, position);
+  return newState;
 };
 
 const offerTrade = (state: BoardState, fromTeam: Team, toTeam: Team, cardId: string): BoardState => {
@@ -1180,7 +1176,7 @@ const gameReducer = (state: BoardState, action: GameAction): BoardState => {
         cards: {
           ...newState.cards,
           activeEffects: resetActiveEffects,
-          justDrawn: null, // Reset the just drawn card on turn end
+          justDrawn: null,
         },
       };
     }
