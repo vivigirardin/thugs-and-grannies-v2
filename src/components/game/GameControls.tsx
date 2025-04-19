@@ -38,23 +38,21 @@ const GameControls: React.FC = () => {
     }, 500);
   };
 
-  // Memoize the end turn handler to prevent multiple dispatches
-  const handleEndTurn = useCallback(() => {
+  // Fix: Using setTimeout to avoid React state update during render
+  const handleEndTurn = () => {
     if (state.gameStatus !== "playing") return;
     
-    // Wrap the toast and dispatch in setTimeout to avoid React warnings
-    // about updating state during render
+    // Immediate UI feedback
+    toast({
+      title: "Turn Ended",
+      description: `${currentTeam}'s turn has ended.`,
+    });
+    
+    // Use setTimeout to avoid the React warning about updates during render
     setTimeout(() => {
-      // Add a toast to confirm turn end
-      toast({
-        title: "Turn Ended",
-        description: `${currentTeam}'s turn has ended.`,
-      });
-      
-      // Dispatch the NEXT_TURN action
       dispatch({ type: "NEXT_TURN" });
-    }, 0);
-  }, [state.gameStatus, currentTeam, dispatch]);
+    }, 10);
+  };
 
   const renderDice = () => {
     if (state.diceValue === 0) {
