@@ -29,13 +29,6 @@ const CARDS: Omit<Card, 'id' | 'used'>[] = [
     icon: "user-minus-2"
   },
   { 
-    type: "distraction", 
-    name: "Distraction", 
-    description: "Choose one puppy – it doesn't distract anyone this round.", 
-    flavor: "Squirrel!",
-    icon: "dog"
-  },
-  { 
     type: "switcheroo", 
     name: "Switcheroo", 
     description: "Swap any two of your gang members on the board.", 
@@ -47,7 +40,7 @@ const CARDS: Omit<Card, 'id' | 'used'>[] = [
   { 
     type: "dumpster_dive", 
     name: "Dumpster Dive", 
-    description: "Hide in place for a turn – police and puppies ignore you.", 
+    description: "Hide in place for a turn – police and grannies ignore you.", 
     flavor: "Not glamorous, but it works.",
     team: "gang",
     icon: "user-minus-2"
@@ -63,7 +56,7 @@ const CARDS: Omit<Card, 'id' | 'used'>[] = [
   { 
     type: "lookout", 
     name: "Lookout", 
-    description: "See where the puppies will move next round before anyone else.", 
+    description: "See where the police will move next round before anyone else.", 
     flavor: "Eyes everywhere.",
     team: "gang",
     icon: "eye"
@@ -159,7 +152,6 @@ const initialState: BoardState = {
   players: [],
   police: [],
   grannies: [],
-  puppies: [],
   exits: [
     { row: 8, col: 0 },
     { row: 12, col: 0 },
@@ -198,7 +190,6 @@ const initialState: BoardState = {
       policeImmobilized: false,
       policeExpansionDelay: false,
       moveDiagonally: null,
-      puppyImmunity: [],
       policeMoveLimited: false,
       skippedPlayers: [],
     },
@@ -435,22 +426,6 @@ const generateInitialBoard = (teams: Team[]): BoardState => {
   });
   state.grannies = grannies;
   
-  const puppies: Position[] = [];
-  for (let i = 0; i < 2; i++) {
-    if (emptyCells.length === 0) break;
-    
-    const randomIndex = Math.floor(Math.random() * emptyCells.length);
-    puppies.push(emptyCells[randomIndex]);
-    
-    emptyCells.splice(randomIndex, 1);
-  }
-  
-  puppies.forEach(pos => {
-    state.cells[pos.row][pos.col].type = "puppy";
-  });
-  
-  state.puppies = puppies;
-  
   const deck = createCardDeck();
   const playerHands: Record<Team, Card[]> = {
     gang: [],
@@ -472,7 +447,6 @@ const generateInitialBoard = (teams: Team[]): BoardState => {
       policeImmobilized: false,
       policeExpansionDelay: false,
       moveDiagonally: null,
-      puppyImmunity: [],
       policeMoveLimited: false,
       skippedPlayers: [],
     },
@@ -648,29 +622,6 @@ const useCard = (state: BoardState, cardId: string, targetId?: string, position?
       });
       break;
 
-    case "distraction":
-      if (!position) {
-        toast({
-          title: "Invalid Target",
-          description: "You need to select a puppy to distract.",
-          variant: "destructive",
-        });
-        return state;
-      }
-      
-      newState.cards.activeEffects.puppyImmunity = [
-        ...newState.cards.activeEffects.puppyImmunity,
-        position
-      ];
-      
-      newState = updateImmobilizedPlayers(newState);
-      
-      toast({
-        title: "Card Used",
-        description: "Distraction: The puppy is distracted this round!",
-      });
-      break;
-
     case "switcheroo":
       toast({
         title: "Card Used",
@@ -694,7 +645,7 @@ const useCard = (state: BoardState, cardId: string, targetId?: string, position?
         
         toast({
           title: "Card Used",
-          description: "Dumpster Dive: This meeple can't be caught by police or distracted by puppies this turn.",
+          description: "Dumpster Dive: This meeple can't be caught by police this turn.",
         });
       } else {
         toast({
@@ -716,7 +667,7 @@ const useCard = (state: BoardState, cardId: string, targetId?: string, position?
     case "lookout":
       toast({
         title: "Card Used",
-        description: "Lookout: You can now see where puppies will move next.",
+        description: "Lookout: You can now see where police will move next.",
       });
       break;
 
@@ -951,44 +902,6 @@ const declineTrade = (state: BoardState): BoardState => {
   };
 };
 
-const updateImmobilizedPlayers = (state: BoardState): BoardState => {
-  const immobilizedIds: string[] = [];
-  
-  state.puppies.forEach(puppyPos => {
-    const isPuppyDistracted = state.cards.activeEffects.puppyImmunity.some(
-      pos => pos.row === puppyPos.row && pos.col === puppyPos.col
-    );
-    
-    if (isPuppyDistracted) {
-      return;
-    }
-    
-    const adjacentPositions = [
-      { row: puppyPos.row - 1, col: puppyPos.col },
-      { row: puppyPos.row + 1, col: puppyPos.col },
-      { row: puppyPos.row, col: puppyPos.col - 1 },
-      { row: puppyPos.row, col: puppyPos.col + 1 },
-    ];
-    
-    adjacentPositions.forEach(pos => {
-      if (
-        pos.row >= 0 && pos.row < state.cells.length &&
-        pos.col >= 0 && pos.col < state.cells[0].length
-      ) {
-        const cell = state.cells[pos.row][pos.col];
-        if (cell.occupiedBy) {
-          immobilizedIds.push(cell.occupiedBy);
-        }
-      }
-    });
-  });
-  
-  return {
-    ...state,
-    immobilizedPlayers: immobilizedIds,
-  };
-};
-
 const gameReducer = (state: BoardState, action: GameAction): BoardState => {
   switch (action.type) {
     case "START_GAME":
@@ -1121,7 +1034,6 @@ const gameReducer = (state: BoardState, action: GameAction): BoardState => {
         policeImmobilized: false,
         policeExpansionDelay: false,
         moveDiagonally: null,
-        puppyImmunity: [],
         policeMoveLimited: false,
         skippedPlayers: [...state.cards.activeEffects.skippedPlayers],
       };

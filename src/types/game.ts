@@ -1,52 +1,22 @@
 
-export type Team = "Gang" | "Mafia" | "Politicians" | "Cartel";
-
-export interface Position {
-  row: number;
-  col: number;
-}
+// Remove 'puppy' from Square type's type
+export type SquareType = "path" | "exit" | "entrance" | "police" | "granny" | "city" | "library" | "school" | "townhall";
 
 export interface Square {
-  type: "path" | "exit" | "entrance" | "police" | "granny" | "puppy" | "city" | "library" | "school" | "townhall";
+  type: SquareType;
   position: Position;
   occupied?: boolean;
   occupiedBy?: string;
   connectedTo?: Position;
 }
 
-export interface Meeple {
-  id: string;
-  team: Team;
-  position: Position;
-  escaped: boolean;
-  arrested: boolean;
-}
-
-export type CardType = 
-  | "smoke_bomb" | "shortcut" | "fake_pass" | "distraction" | "switcheroo"
-  | "dumpster_dive" | "shiv" | "lookout"
-  | "bribe" | "getaway_car" | "cover_story"
-  | "lobbyist" | "public_statement" | "red_tape"
-  | "shadow_step" | "meditation" | "honor_bound"
-  | "empty";
-
-export interface Card {
-  id: string;
-  type: CardType;
-  name: string;
-  description: string;
-  flavor: string;
-  icon: string;
-  team?: Team;
-  used: boolean;
-}
-
+// Remove puppies from BoardState
 export interface BoardState {
   cells: Square[][];
   players: Meeple[];
   police: Position[];
   grannies: Position[];
-  puppies: Position[];
+  // Removed puppies
   exits: Position[];
   jailedPlayers: string[];
   landmarks: {
@@ -79,7 +49,7 @@ export interface BoardState {
       policeImmobilized: boolean;
       policeExpansionDelay: boolean;
       moveDiagonally: string | null;
-      puppyImmunity: Position[];
+      // Remove puppyImmunity
       policeMoveLimited: boolean;
       skippedPlayers: string[];
     };
@@ -90,28 +60,4 @@ export interface BoardState {
       card: Card | null;
     };
   };
-}
-
-export interface GameAction {
-  type: 
-    | "START_GAME"
-    | "ROLL_DICE"
-    | "SELECT_MEEPLE"
-    | "DESELECT_MEEPLE"
-    | "MOVE_PLAYER"
-    | "NEXT_TURN"
-    | "UNDO_MOVE"
-    | "DRAW_CARD"
-    | "KEEP_CARD"
-    | "USE_CARD"
-    | "OFFER_TRADE"
-    | "ACCEPT_TRADE"
-    | "DECLINE_TRADE";
-  teams?: Team[];
-  playerId?: string;
-  position?: Position;
-  targetId?: string;
-  cardId?: string;
-  fromTeam?: Team;
-  toTeam?: Team;
 }
