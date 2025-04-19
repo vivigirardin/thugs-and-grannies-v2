@@ -1,0 +1,41 @@
+
+import React from "react";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { useGame } from "@/context/GameContext";
+import { Button } from "@/components/ui/button";
+import { SkipForward } from "lucide-react";
+import { toast } from "@/hooks/use-toast";
+
+const EndTurnButton: React.FC = () => {
+  const { state, dispatch } = useGame();
+  const isMobile = useIsMobile();
+  const currentTeam = state.players[state.currentPlayer]?.team;
+
+  const handleEndTurn = () => {
+    if (state.gameStatus !== "playing") return;
+    
+    toast({
+      title: "Turn Ended",
+      description: `${currentTeam}'s turn has ended.`,
+    });
+    
+    setTimeout(() => {
+      dispatch({ type: "NEXT_TURN" });
+    }, 10);
+  };
+
+  return (
+    <Button 
+      onClick={handleEndTurn}
+      variant="outline"
+      size={isMobile ? "sm" : "default"}
+      className="flex items-center gap-1"
+      disabled={state.gameStatus !== "playing"}
+    >
+      <SkipForward className={`${isMobile ? "w-4 h-4" : "w-5 h-5"}`} />
+      <span className={`${isMobile ? "text-xs" : "text-sm"}`}>End Turn</span>
+    </Button>
+  );
+};
+
+export default EndTurnButton;
