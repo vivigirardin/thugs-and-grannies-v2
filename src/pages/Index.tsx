@@ -24,6 +24,10 @@ const Index = () => {
         
         <footer className="mt-4 md:mt-8 text-center text-gray-500 text-xs md:text-sm">
           <p>A strategy board game inspired by The Downfall of Pompeii (2004)</p>
+          <p className="mt-1">
+            © {new Date().getFullYear()} Grannies and Thugs. All rights reserved. 
+            Inspired by The Downfall of Pompeii by Heidelberger Spieleverlag.
+          </p>
         </footer>
       </div>
     </div>
