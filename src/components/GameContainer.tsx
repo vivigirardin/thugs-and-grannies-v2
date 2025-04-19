@@ -7,7 +7,7 @@ import TeamSelector from "./game/TeamSelector";
 import GameRules from "./game/GameRules";
 import GameControls from "./game/GameControls";
 import CardManager from "./game/CardManager";
-import "./game/GameStyles.css"; // Import game styles for dice animation
+import "./game/GameStyles.css";
 
 const GameContainer: React.FC = () => {
   const isMobile = useIsMobile();
@@ -15,14 +15,14 @@ const GameContainer: React.FC = () => {
   return (
     <GameProvider>
       <div className={`flex ${isMobile ? "flex-col" : "flex-col"} items-center gap-4 max-w-full overflow-hidden`}>
-        {/* Game controls (Roll Dice) comes first in the turn order */}
-        <div className={`${isMobile ? "w-full" : ""} mt-2 mb-2`}>
-          <GameControls />
-        </div>
-        
-        {/* Card Manager (Draw/Play Card) comes second in the turn order */}
+        {/* Card Manager (Draw/Play Card) comes first in the turn order */}
         <div className={`${isMobile ? "w-full" : ""} mt-2 mb-4`}>
           <CardManager />
+        </div>
+        
+        {/* Game controls (Roll Dice) comes second in the turn order */}
+        <div className={`${isMobile ? "w-full" : ""} mt-2 mb-2`}>
+          <GameControls />
         </div>
         
         {/* The game board shows the board and handles meeple movement */}

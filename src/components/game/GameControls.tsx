@@ -1,5 +1,4 @@
-
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useGame } from "@/context/GameContext";
 import { Button } from "@/components/ui/button";
@@ -20,7 +19,6 @@ const GameControls: React.FC = () => {
   const [showTurnDialog, setShowTurnDialog] = useState(false);
   const currentTeam = state.players[state.currentPlayer]?.team;
 
-  // Show turn dialog when a new turn starts
   useEffect(() => {
     if (state.gameStatus === "playing" && state.diceValue === 0) {
       setShowTurnDialog(true);
@@ -31,24 +29,20 @@ const GameControls: React.FC = () => {
     if (state.gameStatus !== "playing") return;
     setIsDiceRolling(true);
     
-    // Small delay to show animation before updating state
     setTimeout(() => {
       dispatch({ type: "ROLL_DICE" });
       setIsDiceRolling(false);
     }, 500);
   };
 
-  // Fix: Using setTimeout to avoid React state update during render
   const handleEndTurn = () => {
     if (state.gameStatus !== "playing") return;
     
-    // Immediate UI feedback
     toast({
       title: "Turn Ended",
       description: `${currentTeam}'s turn has ended.`,
     });
     
-    // Use setTimeout to avoid the React warning about updates during render
     setTimeout(() => {
       dispatch({ type: "NEXT_TURN" });
     }, 10);
@@ -87,8 +81,8 @@ const GameControls: React.FC = () => {
   };
 
   const determineTurnStep = () => {
-    if (state.diceValue === 0) return 1; // Roll dice
-    if (!state.cards.justDrawn && state.diceValue > 0) return 2; // Draw/play card
+    if (!state.cards.justDrawn && state.diceValue === 0) return 1; // Draw/play card
+    if (state.diceValue === 0) return 2; // Roll dice
     return 3; // Move meeple
   };
 
@@ -136,7 +130,7 @@ const GameControls: React.FC = () => {
               {currentTeam}'s Turn
             </DialogTitle>
             <DialogDescription className="text-center">
-              Follow the turn order: Roll dice, Draw/Play card, Move meeple
+              Follow the turn order: Draw/Play card, Roll dice, Move meeple
             </DialogDescription>
           </DialogHeader>
           
@@ -167,8 +161,8 @@ const GameControls: React.FC = () => {
             <div className="bg-amber-50 p-3 rounded-lg border border-amber-200 w-full mt-2">
               <h3 className="font-bold mb-1 text-amber-800 text-sm">Turn Order:</h3>
               <ol className="list-decimal text-sm text-amber-700 pl-5">
-                <li className={currentStep > 1 ? "line-through opacity-60" : "font-bold"}>Roll the dice</li>
-                <li className={currentStep > 2 ? "line-through opacity-60" : currentStep === 2 ? "font-bold" : ""}>Draw a card OR play a card</li>
+                <li className={currentStep > 1 ? "line-through opacity-60" : "font-bold"}>Draw a card OR play a card</li>
+                <li className={currentStep > 2 ? "line-through opacity-60" : currentStep === 2 ? "font-bold" : ""}>Roll the dice</li>
                 <li className={currentStep === 3 ? "font-bold" : ""}>Move a meeple</li>
                 <li>End turn</li>
               </ol>
