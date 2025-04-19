@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Card as CardType } from "@/types/game";
 import { 
@@ -47,7 +48,7 @@ const getCardTeamClass = (team?: string) => {
   
   switch (team) {
     case "gang": return "bg-game-gang";
-    case "cartel": return "bg-game-cartel";
+    case "mafia": return "bg-game-mafia";
     case "politicians": return "bg-game-politicians";
     case "cartel": return "bg-game-cartel";
     default: return "bg-white";

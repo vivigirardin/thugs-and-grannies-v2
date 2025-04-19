@@ -26,7 +26,6 @@ const CardManager: React.FC = () => {
   const [isTradeDialogOpen, setIsTradeDialogOpen] = useState(false);
   const [isUseCardDialogOpen, setIsUseCardDialogOpen] = useState(false);
   const [targetPlayer, setTargetPlayer] = useState<string | null>(null);
-  const [targetPuppy, setTargetPuppy] = useState<number | null>(null);
 
   const handleDrawCard = () => {
     // Check if player can draw a card (can only draw when not in movement phase)
@@ -130,7 +129,6 @@ const CardManager: React.FC = () => {
 
     setIsUseCardDialogOpen(false);
     setTargetPlayer(null);
-    setTargetPuppy(null);
   };
 
   const renderDrawnCard = () => {
@@ -276,8 +274,6 @@ const CardManager: React.FC = () => {
                 </div>
               </div>
             )}
-
-            
 
             {selectedCard?.type === "switcheroo" && (
               <div>

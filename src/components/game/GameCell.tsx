@@ -53,16 +53,16 @@ const GameCell: React.FC<GameCellProps> = ({
     
     let baseClass = "";
     switch (player.team) {
-      case "Gang":
+      case "gang":
         baseClass = "bg-game-gang";
         break;
-      case "Mafia":
+      case "mafia":
         baseClass = "bg-game-mafia";
         break;
-      case "Politicians":
+      case "politicians":
         baseClass = "bg-game-politicians";
         break;
-      case "Cartel":
+      case "cartel":
         baseClass = "bg-game-cartel";
         break;
       default:

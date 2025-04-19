@@ -1,6 +1,11 @@
 
 export type SquareType = "path" | "exit" | "entrance" | "police" | "granny" | "city" | "library" | "school" | "townhall";
 
+export interface Position {
+  row: number;
+  col: number;
+}
+
 export interface Square {
   type: SquareType;
   position: Position;
@@ -9,6 +14,15 @@ export interface Square {
   connectedTo?: Position;
 }
 
+export type Team = "gang" | "mafia" | "politicians" | "cartel";
+
+export interface Meeple {
+  id: string;
+  team: Team;
+  position: Position;
+  escaped: boolean;
+  arrested: boolean;
+}
 
 export interface BoardState {
   cells: Square[][];
@@ -58,3 +72,48 @@ export interface BoardState {
     };
   };
 }
+
+export type CardType = 
+  | "smoke_bomb" 
+  | "shortcut" 
+  | "fake_pass" 
+  | "switcheroo" 
+  | "dumpster_dive" 
+  | "shiv"
+  | "lookout" 
+  | "bribe" 
+  | "getaway_car" 
+  | "cover_story" 
+  | "lobbyist" 
+  | "public_statement" 
+  | "red_tape" 
+  | "shadow_step" 
+  | "meditation" 
+  | "honor_bound"
+  | "empty"; // Special type for empty deck message
+
+export interface Card {
+  id: string;
+  type: CardType;
+  name: string;
+  description: string;
+  flavor?: string;
+  team?: Team;
+  used: boolean;
+  icon?: string;
+}
+
+export type GameAction =
+  | { type: "START_GAME"; teams: Team[] }
+  | { type: "ROLL_DICE" }
+  | { type: "SELECT_MEEPLE"; playerId: string }
+  | { type: "DESELECT_MEEPLE" }
+  | { type: "MOVE_PLAYER"; position: Position }
+  | { type: "NEXT_TURN" }
+  | { type: "UNDO_MOVE" }
+  | { type: "DRAW_CARD" }
+  | { type: "KEEP_CARD" }
+  | { type: "USE_CARD"; cardId: string; targetId?: string; position?: Position }
+  | { type: "OFFER_TRADE"; fromTeam: Team; toTeam: Team; cardId: string }
+  | { type: "ACCEPT_TRADE" }
+  | { type: "DECLINE_TRADE" };

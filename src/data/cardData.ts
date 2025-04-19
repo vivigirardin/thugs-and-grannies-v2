@@ -1,3 +1,4 @@
+
 import { Team, Card, CardType } from "@/types/game";
 
 export const CARDS: Omit<Card, 'id' | 'used'>[] = [
