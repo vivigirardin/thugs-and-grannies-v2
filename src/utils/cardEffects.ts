@@ -1,5 +1,5 @@
 
-import { BoardState } from '@/types/game';
+import { BoardState, Position } from '@/types/game';
 
 export const useCard = (state: BoardState, cardId: string, targetId?: string, position?: Position): BoardState => {
   const currentTeam = state.players[state.currentPlayer].team;
