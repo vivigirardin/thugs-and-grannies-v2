@@ -1,3 +1,4 @@
+
 import { BoardState, GameAction, Team } from '@/types/game';
 import { generateInitialBoard } from '@/utils/boardUtils';
 import { drawCard, keepCard, offerTrade, acceptTrade, declineTrade } from '@/utils/cardUtils';
@@ -61,9 +62,6 @@ export const initialState: BoardState = {
       to: null,
       card: null,
     },
-  },
-  turnState: {
-    hasMoved: false,
   },
 };
 
@@ -171,10 +169,6 @@ export const gameReducer = (state: BoardState, action: GameAction): BoardState =
         activeMeeple: null,
         gameStatus,
         winner,
-        turnState: {
-          ...state.turnState,
-          hasMoved: true,
-        },
       };
     }
       
@@ -185,9 +179,6 @@ export const gameReducer = (state: BoardState, action: GameAction): BoardState =
         diceValue: 0,
         turnCount: state.turnCount + 1,
         canUndo: false,
-        turnState: {
-          hasMoved: false,
-        },
       };
       
       const resetActiveEffects = {

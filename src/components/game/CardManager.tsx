@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { useGame } from "@/context/GameContext";
 import { Team, Card } from "@/types/game";
@@ -23,10 +24,10 @@ const CardManager: React.FC = () => {
   const [targetPlayer, setTargetPlayer] = useState<string | null>(null);
 
   const handleDrawCard = () => {
-    if (state.turnState.hasMoved) {
+    if (state.diceValue > 0) {
       toast({
         title: "Can't Draw Now",
-        description: "You need to draw or use a card before moving.",
+        description: "You need to complete your movement first.",
         variant: "destructive",
       });
       return;
@@ -45,10 +46,10 @@ const CardManager: React.FC = () => {
   };
 
   const handleUseCard = (card: Card) => {
-    if (state.turnState.hasMoved) {
+    if (state.diceValue > 0) {
       toast({
         title: "Can't Use Card Now",
-        description: "You need to use cards before moving.",
+        description: "You need to complete your movement first.",
         variant: "destructive",
       });
       return;
