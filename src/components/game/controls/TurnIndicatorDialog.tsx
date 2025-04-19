@@ -1,3 +1,4 @@
+
 import React from "react";
 import { useGame } from "@/context/GameContext";
 import { Button } from "@/components/ui/button";
@@ -13,15 +14,11 @@ import TurnStepGuide from "./TurnStepGuide";
 interface TurnIndicatorDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  isDiceRolling: boolean;
-  onRollDice: () => void;
 }
 
 const TurnIndicatorDialog: React.FC<TurnIndicatorDialogProps> = ({
   open,
   onOpenChange,
-  isDiceRolling,
-  onRollDice,
 }) => {
   const { state } = useGame();
   const currentTeam = state.players[state.currentPlayer]?.team;
@@ -61,28 +58,9 @@ const TurnIndicatorDialog: React.FC<TurnIndicatorDialogProps> = ({
         
         <div className="flex flex-col items-center gap-4 py-4">
           <div className={`p-4 rounded-full ${getTeamColor(currentTeam || "")}`}>
-            <div className={`${isDiceRolling ? 'animate-dice-roll' : ''}`}>
-              {/* Dice display handled by DiceControl */}
-            </div>
+            {/* Dice display now handled by DiceControl */}
           </div>
           
-          {state.diceValue === 0 ? (
-            <Button 
-              onClick={() => {
-                onRollDice();
-                onOpenChange(false);
-              }}
-              className="w-32"
-            >
-              Roll Dice
-            </Button>
-          ) : (
-            <div className="text-center">
-              <p className="mb-2 text-lg font-medium">You rolled a {state.diceValue}!</p>
-              <p className="text-sm text-gray-600 mb-2">Next, draw a card or use one from your hand.</p>
-            </div>
-          )}
-
           <TurnStepGuide currentStep={determineTurnStep()} />
         </div>
       </DialogContent>
@@ -91,3 +69,4 @@ const TurnIndicatorDialog: React.FC<TurnIndicatorDialogProps> = ({
 };
 
 export default TurnIndicatorDialog;
+

@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo } from "react";
 import { useGame } from "@/context/GameContext";
 import GameCell from "./game/GameCell";
@@ -14,7 +13,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import "../components/game/GameStyles.css";
+import "./game/GameStyles.css";
 
 const GameBoard: React.FC = () => {
   const { state, dispatch } = useGame();
@@ -23,7 +22,6 @@ const GameBoard: React.FC = () => {
   const selectedMeeple = state.activeMeeple 
     ? state.players.find(p => p.id === state.activeMeeple) 
     : null;
-  const [isDiceRolling, setIsDiceRolling] = useState(false);
   const [showTurnDialog, setShowTurnDialog] = useState(false);
 
   const escapedMeeplesByTeam = useMemo(() => {
@@ -199,39 +197,6 @@ const GameBoard: React.FC = () => {
     }
   };
 
-  const renderDice = () => {
-    if (state.diceValue === 0) {
-      return <Dice6 className="w-12 h-12 opacity-50" />;
-    }
-
-    const DiceIcons = [
-      <Dice1 key={1} className="w-12 h-12" />,
-      <Dice2 key={2} className="w-12 h-12" />,
-      <Dice3 key={3} className="w-12 h-12" />,
-      <Dice4 key={4} className="w-12 h-12" />,
-      <Dice5 key={5} className="w-12 h-12" />,
-      <Dice6 key={6} className="w-12 h-12" />
-    ];
-    
-    return DiceIcons[state.diceValue - 1];
-  };
-
-  const handleRollDice = () => {
-    if (state.gameStatus !== "playing") return;
-    setIsDiceRolling(true);
-    
-    setTimeout(() => {
-      dispatch({ type: "ROLL_DICE" });
-      setIsDiceRolling(false);
-    }, 500);
-  };
-
-  const handleEndTurn = () => {
-    if (state.gameStatus !== "playing") return;
-    dispatch({ type: "NEXT_TURN" });
-    setShowTurnDialog(true);
-  };
-
   React.useEffect(() => {
     if (state.gameStatus === "playing" && state.diceValue === 0) {
       setShowTurnDialog(true);
@@ -314,24 +279,14 @@ const GameBoard: React.FC = () => {
           
           <div className="flex flex-col items-center gap-6 py-4">
             <div className={`p-4 rounded-full ${getTeamColor(currentTeam || "")}`}>
-              <div className={`${isDiceRolling ? 'animate-dice-roll' : ''}`}>
-                {renderDice()}
-              </div>
+              {/* Dice display now handled by DiceControl */}
             </div>
             
-            {state.diceValue === 0 ? (
-              <Button 
-                onClick={handleRollDice}
-                className="w-32"
-              >
-                Roll Dice
-              </Button>
-            ) : (
-              <div className="text-center">
-                <p className="mb-2 text-lg font-medium">You rolled a {state.diceValue}!</p>
-                <p className="text-sm text-gray-600">Click a meeple to select it, then click a highlighted cell to move.</p>
-              </div>
-            )}
+            <div className="text-center">
+              <p className="text-sm text-gray-600">
+                Use the Roll Dice button in the game controls.
+              </p>
+            </div>
           </div>
         </DialogContent>
       </Dialog>
