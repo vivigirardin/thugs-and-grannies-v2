@@ -1,5 +1,4 @@
 
-// Remove 'puppy' from Square type's type
 export type SquareType = "path" | "exit" | "entrance" | "police" | "granny" | "city" | "library" | "school" | "townhall";
 
 export interface Square {
@@ -10,13 +9,12 @@ export interface Square {
   connectedTo?: Position;
 }
 
-// Remove puppies from BoardState
+
 export interface BoardState {
   cells: Square[][];
   players: Meeple[];
   police: Position[];
   grannies: Position[];
-  // Removed puppies
   exits: Position[];
   jailedPlayers: string[];
   landmarks: {
@@ -49,7 +47,6 @@ export interface BoardState {
       policeImmobilized: boolean;
       policeExpansionDelay: boolean;
       moveDiagonally: string | null;
-      // Remove puppyImmunity
       policeMoveLimited: boolean;
       skippedPlayers: string[];
     };

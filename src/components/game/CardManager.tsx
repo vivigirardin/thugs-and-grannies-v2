@@ -69,7 +69,6 @@ const CardManager: React.FC = () => {
     // Cards that need target selection
     if (
       card.type === "public_statement" ||
-      card.type === "distraction" ||
       card.type === "switcheroo"
     ) {
       setIsUseCardDialogOpen(true);
@@ -119,15 +118,6 @@ const CardManager: React.FC = () => {
       case "public_statement":
         if (targetPlayer) {
           dispatch({ type: "USE_CARD", cardId: selectedCard.id, targetId: targetPlayer });
-        }
-        break;
-      case "distraction":
-        if (targetPuppy !== null && targetPuppy >= 0 && targetPuppy < state.puppies.length) {
-          dispatch({ 
-            type: "USE_CARD", 
-            cardId: selectedCard.id, 
-            position: state.puppies[targetPuppy]
-          });
         }
         break;
       case "switcheroo":
@@ -287,24 +277,7 @@ const CardManager: React.FC = () => {
               </div>
             )}
 
-            {selectedCard?.type === "distraction" && (
-              <div>
-                <h3 className="font-bold mb-2 flex items-center gap-2">
-                  <Dog size={16} /> Choose puppy
-                </h3>
-                <div className="grid grid-cols-2 gap-2">
-                  {state.puppies.map((puppy, index) => (
-                    <Button
-                      key={index}
-                      variant={targetPuppy === index ? "default" : "outline"}
-                      onClick={() => setTargetPuppy(index)}
-                    >
-                      Puppy {index + 1} ({puppy.row}, {puppy.col})
-                    </Button>
-                  ))}
-                </div>
-              </div>
-            )}
+            
 
             {selectedCard?.type === "switcheroo" && (
               <div>
@@ -323,8 +296,7 @@ const CardManager: React.FC = () => {
             <Button 
               onClick={handleConfirmUseCard}
               disabled={
-                (selectedCard?.type === "public_statement" && !targetPlayer) ||
-                (selectedCard?.type === "distraction" && targetPuppy === null)
+                (selectedCard?.type === "public_statement" && !targetPlayer)
               }
             >
               Use Card

@@ -1,5 +1,148 @@
+@keyframes dice-roll {
+  0% {
+    transform: rotate(0deg);
+  }
+  20% {
+    transform: rotate(90deg);
+  }
+  40% {
+    transform: rotate(180deg);
+  }
+  60% {
+    transform: rotate(270deg);
+  }
+  80% {
+    transform: rotate(360deg);
+  }
+  100% {
+    transform: rotate(0deg);
+  }
+}
 
-/* Remove puppy-specific styles */
-.bg-game-puppy {
-  display: none;
+.animate-dice-roll {
+  animation: dice-roll 0.5s ease-in-out;
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.3s ease-in-out;
+}
+
+.bg-game-gang {
+  background-color: #e53e3e;
+}
+
+.bg-game-mafia {
+  background-color: #38a169;
+}
+
+.bg-game-politicians {
+  background-color: #3182ce;
+}
+
+.bg-game-cartel {
+  background-color: #ffff00;
+}
+
+.bg-game-path {
+  background-color: #e2e8f0;
+}
+
+.bg-game-exit {
+  background-color: #38a169;
+}
+
+.bg-game-police {
+  background-color: #2b6cb0;
+  /* Make police cells larger and more visible */
+  transform: scale(1.1);
+  box-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
+  z-index: 5;
+}
+
+.bg-game-granny {
+  background-color: #d53f8c;
+  /* Make granny cells larger and more visible */
+  transform: scale(1.05);
+  box-shadow: 0 0 3px rgba(0, 0, 0, 0.4);
+  z-index: 4;
+}
+
+.bg-game-board {
+  background-color: #1a202c;
+}
+
+/* Police officer icon styles */
+.police-icon {
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: white;
+  filter: drop-shadow(0px 0px 2px rgba(0,0,0,0.7));
+}
+
+/* Mobile specific styles */
+@media (max-width: 768px) {
+  .game-cell {
+    width: 18px;
+    height: 18px;
+    font-size: 10px;
+  }
+  
+  .game-board {
+    gap: 1px;
+  }
+  
+  .police-icon {
+    font-size: 0.9rem;
+  }
+
+}
+
+/* Add styles for escaped meeples section */
+.escaped-meeples {
+  margin-top: 1rem;
+  padding: 0.75rem;
+  background-color: #4ade80;
+  border-radius: 0.5rem;
+  width: 100%;
+  max-width: xl;
+}
+
+.winner-badge {
+  background-color: gold;
+  color: black;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+  font-weight: bold;
+  margin-left: 0.5rem;
+  font-size: 0.75rem;
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    opacity: 0.7;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0.7;
+  }
+}
+
+/* Mobile specific styles */
+@media (max-width: 768px) {
+  .escaped-meeples {
+    padding: 0.5rem;
+  }
+  
+  .winner-badge {
+    padding: 0.2rem 0.4rem;
+    font-size: 0.7rem;
+  }
 }

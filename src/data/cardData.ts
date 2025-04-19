@@ -35,7 +35,7 @@ export const CARDS: Omit<Card, 'id' | 'used'>[] = [
   { 
     type: "dumpster_dive", 
     name: "Dumpster Dive", 
-    description: "Hide in place for a turn – police and puppies ignore you.", 
+    description: "Hide in place for a turn – police and grannies ignore you.", 
     flavor: "Not glamorous, but it works.",
     team: "gang",
     icon: "user-minus-2"
@@ -47,14 +47,6 @@ export const CARDS: Omit<Card, 'id' | 'used'>[] = [
     flavor: "He'll think twice next time.",
     team: "gang",
     icon: "sword"
-  },
-  { 
-    type: "lookout", 
-    name: "Lookout", 
-    description: "See where the puppies will move next round before anyone else.", 
-    flavor: "Eyes everywhere.",
-    team: "gang",
-    icon: "eye"
   },
   
   // Mafia cards

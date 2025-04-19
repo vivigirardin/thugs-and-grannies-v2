@@ -50,7 +50,7 @@ const GameCell: React.FC<GameCellProps> = ({
   const getPlayerClass = () => {
     if (!player) return "";
     
-    // Remove immobilized by puppy logic
+    
     let baseClass = "";
     switch (player.team) {
       case "Gang":

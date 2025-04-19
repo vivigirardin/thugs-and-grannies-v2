@@ -104,8 +104,7 @@ const GameBoard: React.FC = () => {
     }
     
     // Can't move to occupied cells or cells with police or grannies
-    if (cell.occupied || cell.type === "police" || cell.type === "granny" || 
-        cell.type === "puppy" || (cell.type !== "path" && cell.type !== "exit")) {
+    if (cell.occupied || cell.type === "police" || cell.type === "granny" || (cell.type !== "path" && cell.type !== "exit")) {
       return false;
     }
     

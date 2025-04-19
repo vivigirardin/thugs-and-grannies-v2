@@ -37,7 +37,6 @@ const GameRules: React.FC = () => {
         <ul className={`list-disc pl-5 space-y-2 ${isMobile ? "text-xs" : "text-sm"}`}>
           <li><span className="font-semibold">Police (Blue):</span> Start in the center and expand outward each round. If they catch you, it's straight to jail!</li>
           <li><span className="font-semibold">Grannies (Pink):</span> You must go around them - no passing through granny squares!</li>
-          <li><span className="font-semibold">Puppies (Purple):</span> Move randomly each round. If your member is next to a puppy, they're distracted and can't move that turn!</li>
         </ul>
       </div>
 
