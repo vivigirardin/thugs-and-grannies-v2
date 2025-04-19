@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useGame } from "@/context/GameContext";
 import { Team, Card } from "@/types/game";
@@ -207,4 +206,3 @@ const CardManager: React.FC = () => {
 };
 
 export default CardManager;
-
