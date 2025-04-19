@@ -8,6 +8,7 @@ import DrawnCard from "./cards/DrawnCard";
 import PlayerHand from "./cards/PlayerHand";
 import TradeDialog from "./cards/TradeDialog";
 import UseCardDialog from "./cards/UseCardDialog";
+import GameCard from "./GameCard";
 
 const CardManager: React.FC = () => {
   const { state, dispatch } = useGame();
@@ -115,7 +116,6 @@ const CardManager: React.FC = () => {
     setTargetPlayer(null);
   };
 
-  // Get opposing players for card targeting
   const opposingPlayers = state.players.filter(
     player => player.team !== currentTeam && !player.arrested && !player.escaped
   );
