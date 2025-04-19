@@ -1,3 +1,4 @@
+import { CardState } from "./cards";
 
 export type Team = "Gang" | "Mafia" | "Politicians" | "Cartel";
 
@@ -68,28 +69,7 @@ export interface BoardState {
   immobilizedPlayers: string[];
   previousState: BoardState | null;
   canUndo: boolean;
-  cards: {
-    deck: Card[];
-    playerHands: {
-      [key in Team]: Card[];
-    };
-    activeEffects: {
-      policeIgnore: string[];
-      grannyIgnore: string[];
-      policeImmobilized: boolean;
-      policeExpansionDelay: boolean;
-      moveDiagonally: string | null;
-      puppyImmunity: Position[];
-      policeMoveLimited: boolean;
-      skippedPlayers: string[];
-    };
-    justDrawn: Card | null;
-    tradingOffer: {
-      from: Team | null;
-      to: Team | null;
-      card: Card | null;
-    };
-  };
+  cards: CardState;
 }
 
 export interface GameAction {
