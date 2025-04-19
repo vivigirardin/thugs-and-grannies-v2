@@ -187,10 +187,10 @@ const initialState: BoardState = {
   cards: {
     deck: [],
     playerHands: {
-      creeps: [],
-      italian: [],
+      gang: [],
+      mafia: [],
       politicians: [],
-      japanese: [],
+      cartel: [],
     },
     activeEffects: {
       policeIgnore: [],
@@ -453,10 +453,10 @@ const generateInitialBoard = (teams: Team[]): BoardState => {
   
   const deck = createCardDeck();
   const playerHands: Record<Team, Card[]> = {
-    creeps: [],
-    italian: [],
+    gang: [],
+    mafia: [],
     politicians: [],
-    japanese: [],
+    cartel: [],
   };
   
   teams.forEach(team => {
@@ -1074,10 +1074,10 @@ const gameReducer = (state: BoardState, action: GameAction): BoardState => {
       
       if (escaped) {
         const escapedCounts: Record<Team, number> = {
-          creeps: 0,
-          italian: 0,
+          gang: 0,
+          mafia: 0,
           politicians: 0,
-          japanese: 0,
+          cartel: 0,
         };
         
         updatedPlayers.forEach(p => {

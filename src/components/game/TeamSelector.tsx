@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
@@ -8,13 +7,13 @@ import { CheckCircle } from "lucide-react";
 
 const TeamSelector: React.FC = () => {
   const { dispatch } = useGame();
-  const [selectedTeams, setSelectedTeams] = useState<Team[]>(["creeps", "politicians"]);
+  const [selectedTeams, setSelectedTeams] = useState<Team[]>(["gang", "politicians"]);
   
   const teams: { id: Team; name: string }[] = [
-    { id: "creeps", name: "The Creeps Gang" },
-    { id: "italian", name: "Italian Mafia" },
+    { id: "gang", name: "The Gang" },
+    { id: "mafia", name: "Italian Mafia" },
     { id: "politicians", name: "Politicians" },
-    { id: "japanese", name: "Japanese Mafia" }
+    { id: "cartel", name: "Japanese Cartel" }
   ];
   
   const toggleTeam = (team: Team) => {
@@ -26,7 +25,6 @@ const TeamSelector: React.FC = () => {
   };
   
   const handleStartGame = () => {
-    // Ensure at least one team is selected
     if (selectedTeams.length === 0) {
       return;
     }
@@ -35,14 +33,14 @@ const TeamSelector: React.FC = () => {
   
   const getTeamColorClass = (team: Team) => {
     switch (team) {
-      case "creeps":
+      case "gang":
         return "bg-game-creeps text-white";
-      case "italian":
+      case "mafia":
         return "bg-game-italian text-white";
       case "politicians":
         return "bg-game-politicians text-white";
-      case "japanese":
-        return "bg-game-japanese text-white";
+      case "cartel":
+        return "bg-[#F2FCE2] text-black";
       default:
         return "bg-gray-500";
     }
