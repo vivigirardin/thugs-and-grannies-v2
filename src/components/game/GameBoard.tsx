@@ -1,4 +1,3 @@
-
 import React from "react";
 import { useGame } from "@/context/GameContext";
 import GameCell from "./GameCell";
@@ -6,6 +5,7 @@ import { Position, Team } from "@/types/game";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Trophy } from "lucide-react";
+import { toast } from "@/components/ui/toast";
 
 const GameBoard: React.FC = () => {
   const { state, dispatch } = useGame();
@@ -56,6 +56,15 @@ const GameBoard: React.FC = () => {
 
     // If we have a selected meeple and dice is rolled, try to move
     if (selectedMeeple && state.diceValue > 0 && !selectedMeeple.arrested && !selectedMeeple.escaped) {
+      if (!state.cards.justDrawn && state.cards.playerHands[currentTeam || ""]?.length === 0) {
+        toast({
+          title: "Draw a Card First",
+          description: "You must draw or use a card before moving your meeple.",
+          variant: "destructive",
+        });
+        return;
+      }
+      
       // Check if this is an entrance
       const targetCell = state.cells[position.row][position.col];
       if (targetCell.type === "entrance" && targetCell.connectedTo) {

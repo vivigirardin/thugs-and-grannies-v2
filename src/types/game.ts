@@ -1,4 +1,3 @@
-
 export type SquareType = "path" | "exit" | "entrance" | "police" | "granny" | "city" | "library" | "school" | "townhall";
 
 export interface Position {
@@ -70,6 +69,9 @@ export interface BoardState {
       to: Team | null;
       card: Card | null;
     };
+  };
+  turnState: {
+    hasMoved: boolean;
   };
 }
 
