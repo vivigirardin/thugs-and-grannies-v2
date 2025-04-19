@@ -69,10 +69,10 @@ export default {
 				// Game specific colors
 				game: {
 					board: '#f2e8c9',
-					creeps: '#e63946',
-					italian: '#2a9d8f',
+					gang: '#e63946',
+					mafia: '#2a9d8f',
 					politicians: '#457b9d', 
-					japanese: '#6a0572',
+					cartel: '#ffff00',
 					police: '#1d3557',
 					granny: '#ffafcc',
 					path: '#e9c46a',

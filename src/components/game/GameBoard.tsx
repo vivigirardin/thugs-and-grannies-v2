@@ -16,10 +16,10 @@ const GameBoard: React.FC = () => {
   // Record of escaped meeples by team
   const escapedMeeplesByTeam = React.useMemo(() => {
     const escaped: Record<Team, number> = {
-      creeps: 0,
-      italian: 0,
+      gang: 0,
+      mafia: 0,
       politicians: 0,
-      japanese: 0
+      cartel: 0
     };
     
     state.players.forEach(player => {
@@ -183,14 +183,14 @@ const GameBoard: React.FC = () => {
 
   const getTeamColor = (team: string) => {
     switch (team) {
-      case "creeps":
-        return "bg-game-creeps text-white";
-      case "italian":
-        return "bg-game-italian text-white";
+      case "gang":
+        return "bg-game-gang text-white";
+      case "mafia":
+        return "bg-game-mafia text-white";
       case "politicians":
         return "bg-game-politicians text-white";
-      case "japanese":
-        return "bg-game-japanese text-white";
+      case "cartel":
+        return "bg-game-cartel text-white";
       default:
         return "bg-gray-500 text-white";
     }

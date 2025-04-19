@@ -26,7 +26,7 @@ const GameRules: React.FC = () => {
       <div className="space-y-2">
         <h3 className={`font-bold ${isMobile ? "text-sm" : "text-base"}`}>How to Play:</h3>
         <ul className={`list-disc pl-5 space-y-2 ${isMobile ? "text-xs" : "text-sm"}`}>
-          <li>Select your team: Creeps (red), Italian (green), Politicians (blue), or Japanese (yellow).</li>
+          <li>Select your team: Gang (red), Mafia (green), Politicians (blue), or Cartel (yellow).</li>
           <li>Roll the dice to move one of your team members - you must move the exact number shown.</li>
           <li>Get your members to any exit square (green) to escape successfully.</li>
         </ul>

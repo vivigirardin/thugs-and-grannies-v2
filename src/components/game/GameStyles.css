@@ -32,11 +32,11 @@
   animation: fade-in 0.3s ease-in-out;
 }
 
-.bg-game-creeps {
+.bg-game-gang {
   background-color: #e53e3e;
 }
 
-.bg-game-italian {
+.bg-game-mafia {
   background-color: #38a169;
 }
 
@@ -44,8 +44,8 @@
   background-color: #3182ce;
 }
 
-.bg-game-japanese {
-  background-color: #d69e2e;
+.bg-game-cartel {
+  background-color: #ffff00;
 }
 
 .bg-game-path {

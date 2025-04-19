@@ -43,13 +43,13 @@ const CARDS: Omit<Card, 'id' | 'used'>[] = [
     icon: "switch-camera"
   },
   
-  // Creeps cards
+  // Gang cards
   { 
     type: "dumpster_dive", 
     name: "Dumpster Dive", 
     description: "Hide in place for a turn – police and puppies ignore you.", 
     flavor: "Not glamorous, but it works.",
-    team: "creeps",
+    team: "gang",
     icon: "user-minus-2"
   },
   { 
@@ -57,7 +57,7 @@ const CARDS: Omit<Card, 'id' | 'used'>[] = [
     name: "Shiv", 
     description: "Push an adjacent police officer back one space.", 
     flavor: "He'll think twice next time.",
-    team: "creeps",
+    team: "gang",
     icon: "sword"
   },
   { 
@@ -65,17 +65,17 @@ const CARDS: Omit<Card, 'id' | 'used'>[] = [
     name: "Lookout", 
     description: "See where the puppies will move next round before anyone else.", 
     flavor: "Eyes everywhere.",
-    team: "creeps",
+    team: "gang",
     icon: "eye"
   },
   
-  // Italian cards
+  // Mafia cards
   { 
     type: "bribe", 
     name: "Bribe", 
     description: "Delay police movement for one round.", 
     flavor: "Everyone's got a price.",
-    team: "italian",
+    team: "mafia",
     icon: "dollar-sign"
   },
   { 
@@ -83,7 +83,7 @@ const CARDS: Omit<Card, 'id' | 'used'>[] = [
     name: "Getaway Car", 
     description: "Move two gang members, 1 space each.", 
     flavor: "Hop in!",
-    team: "italian",
+    team: "mafia",
     icon: "car"
   },
   { 
@@ -91,7 +91,7 @@ const CARDS: Omit<Card, 'id' | 'used'>[] = [
     name: "Cover Story", 
     description: "One gang member can move through 1 police square.", 
     flavor: "He's with me.",
-    team: "italian",
+    team: "mafia",
     icon: "user"
   },
   
@@ -121,13 +121,13 @@ const CARDS: Omit<Card, 'id' | 'used'>[] = [
     icon: "file-warning"
   },
   
-  // Japanese cards
+  // Cartel cards
   { 
     type: "shadow_step", 
     name: "Shadow Step", 
     description: "Move through 1 granny square this turn.", 
     flavor: "No sound. No trace.",
-    team: "japanese",
+    team: "cartel",
     icon: "notepad-text"
   },
   { 
@@ -135,7 +135,7 @@ const CARDS: Omit<Card, 'id' | 'used'>[] = [
     name: "Meditation", 
     description: "Reroll your dice once this turn.", 
     flavor: "Still the mind. Try again.",
-    team: "japanese",
+    team: "cartel",
     icon: "dice-5"
   },
   { 
@@ -143,7 +143,7 @@ const CARDS: Omit<Card, 'id' | 'used'>[] = [
     name: "Honor Bound", 
     description: "If a gang member is caught, immediately move another one 3 spaces.", 
     flavor: "Their sacrifice won't be in vain.",
-    team: "japanese",
+    team: "cartel",
     icon: "fist"
   },
 ];

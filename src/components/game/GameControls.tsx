@@ -75,14 +75,14 @@ const GameControls: React.FC = () => {
 
   const getTeamColor = (team: string) => {
     switch (team) {
-      case "creeps":
-        return "bg-game-creeps text-white";
-      case "italian":
-        return "bg-game-italian text-white";
+      case "gang":
+        return "bg-game-gang text-white";
+      case "mafia":
+        return "bg-game-mafia text-white";
       case "politicians":
         return "bg-game-politicians text-white";
-      case "japanese":
-        return "bg-game-japanese text-white";
+      case "cartel":
+        return "bg-game-cartel text-white";
       default:
         return "bg-gray-500 text-white";
     }

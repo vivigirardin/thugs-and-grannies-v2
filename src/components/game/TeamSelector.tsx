@@ -10,10 +10,10 @@ const TeamSelector: React.FC = () => {
   const [selectedTeams, setSelectedTeams] = useState<Team[]>(["gang", "politicians"]);
   
   const teams: { id: Team; name: string }[] = [
-    { id: "gang", name: "The Gang" },
-    { id: "mafia", name: "Italian Mafia" },
+    { id: "gang", name: "Gang" },
+    { id: "mafia", name: "Mafia" },
     { id: "politicians", name: "Politicians" },
-    { id: "cartel", name: "Japanese Cartel" }
+    { id: "cartel", name: "Cartel" }
   ];
   
   const toggleTeam = (team: Team) => {
@@ -34,9 +34,9 @@ const TeamSelector: React.FC = () => {
   const getTeamColorClass = (team: Team) => {
     switch (team) {
       case "gang":
-        return "bg-game-creeps text-white";
+        return "bg-game-gang text-white";
       case "mafia":
-        return "bg-game-italian text-white";
+        return "bg-game-mafia text-white";
       case "politicians":
         return "bg-game-politicians text-white";
       case "cartel":

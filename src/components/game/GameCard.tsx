@@ -46,10 +46,10 @@ const getCardTeamClass = (team?: string) => {
   if (!team) return "bg-white";
   
   switch (team) {
-    case "creeps": return "bg-game-creeps";
-    case "italian": return "bg-game-italian";
+    case "gang": return "bg-game-gang";
+    case "cartel": return "bg-game-cartel";
     case "politicians": return "bg-game-politicians";
-    case "japanese": return "bg-game-japanese";
+    case "cartel": return "bg-game-cartel";
     default: return "bg-white";
   }
 };
