@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { useGame } from "@/context/GameContext";
 import { Team, Card } from "@/types/game";
@@ -85,10 +86,10 @@ const CardManager: React.FC = () => {
   };
 
   const handleOfferTrade = () => {
-    if (selectedCard && targetTeam) {
+    if (selectedCard && targetTeam && currentTeam) {
       dispatch({ 
         type: "OFFER_TRADE", 
-        fromTeam: currentTeam!, 
+        fromTeam: currentTeam, 
         toTeam: targetTeam, 
         cardId: selectedCard.id 
       });

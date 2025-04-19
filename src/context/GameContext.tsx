@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useReducer } from "react";
+import React, { createContext, useContext, useReducer, useEffect, useRef } from "react";
 import { BoardState, GameAction, Position, Team, Square, Meeple, Card, CardType } from "@/types/game";
 import { toast } from "@/hooks/use-toast";
 import { v4 as uuidv4 } from 'uuid';
@@ -506,7 +506,6 @@ const drawCard = (state: BoardState): BoardState => {
   const currentTeam = state.players[state.currentPlayer].team;
   
   if (state.cards.deck.length === 0) {
-    // Don't call toast directly here - will cause React render warning
     return {
       ...state,
       cards: {
@@ -532,7 +531,6 @@ const drawCard = (state: BoardState): BoardState => {
     justDrawn: newCardDrawn,
   };
   
-  // Don't call toast directly here
   return newState;
 };
 
@@ -582,26 +580,12 @@ const useCard = (state: BoardState, cardId: string, targetId?: string, position?
         ...playerIds
       ];
       
-      toast({
-        title: "Card Used",
-        description: "Smoke Bomb: Your team is hidden from police this turn!",
-      });
       break;
 
     case "shortcut":
       if (state.activeMeeple) {
         newState.cards.activeEffects.moveDiagonally = state.activeMeeple;
-        
-        toast({
-          title: "Card Used",
-          description: "Shortcut: You can move diagonally this turn!",
-        });
       } else {
-        toast({
-          title: "Select a Meeple",
-          description: "You need to select a meeple to use this card on.",
-          variant: "destructive",
-        });
         return state;
       }
       break;
@@ -616,17 +600,9 @@ const useCard = (state: BoardState, cardId: string, targetId?: string, position?
         ...meepleIds
       ];
       
-      toast({
-        title: "Card Used",
-        description: "Fake Pass: Your team can pass through grannies this turn!",
-      });
       break;
 
     case "switcheroo":
-      toast({
-        title: "Card Used",
-        description: "Switcheroo: Select two of your meeples to swap positions.",
-      });
       break;
 
     case "dumpster_dive":
@@ -642,63 +618,28 @@ const useCard = (state: BoardState, cardId: string, targetId?: string, position?
             id => id !== state.activeMeeple
           );
         }
-        
-        toast({
-          title: "Card Used",
-          description: "Dumpster Dive: This meeple can't be caught by police this turn.",
-        });
       } else {
-        toast({
-          title: "Select a Meeple",
-          description: "You need to select a meeple to use this card on.",
-          variant: "destructive",
-        });
         return state;
       }
       break;
 
     case "shiv":
-      toast({
-        title: "Card Used",
-        description: "Shiv: Select an adjacent police officer to push back.",
-      });
       break;
 
     case "lookout":
-      toast({
-        title: "Card Used",
-        description: "Lookout: You can now see where police will move next.",
-      });
       break;
 
     case "bribe":
       newState.cards.activeEffects.policeImmobilized = true;
       
-      toast({
-        title: "Card Used",
-        description: "Bribe: Police movement is delayed for one round.",
-      });
       break;
 
     case "getaway_car":
-      toast({
-        title: "Card Used",
-        description: "Getaway Car: You can move two of your meeples one space each.",
-      });
       break;
 
     case "cover_story":
       if (state.activeMeeple) {
-        toast({
-          title: "Card Used",
-          description: "Cover Story: This meeple can move through one police square this turn.",
-        });
       } else {
-        toast({
-          title: "Select a Meeple",
-          description: "You need to select a meeple to use this card on.",
-          variant: "destructive",
-        });
         return state;
       }
       break;
@@ -706,19 +647,10 @@ const useCard = (state: BoardState, cardId: string, targetId?: string, position?
     case "lobbyist":
       newState.cards.activeEffects.policeExpansionDelay = true;
       
-      toast({
-        title: "Card Used",
-        description: "Lobbyist: Police won't expand this round.",
-      });
       break;
 
     case "public_statement":
       if (!targetId) {
-        toast({
-          title: "Invalid Target",
-          description: "You need to select an opponent's meeple.",
-          variant: "destructive",
-        });
         return state;
       }
       
@@ -727,19 +659,11 @@ const useCard = (state: BoardState, cardId: string, targetId?: string, position?
         targetId
       ];
       
-      toast({
-        title: "Card Used",
-        description: "Public Statement: The selected opponent will skip their next turn.",
-      });
       break;
 
     case "red_tape":
       newState.cards.activeEffects.policeMoveLimited = true;
       
-      toast({
-        title: "Card Used",
-        description: "Red Tape: Police can't move more than 1 space this round.",
-      });
       break;
 
     case "shadow_step":
@@ -748,17 +672,7 @@ const useCard = (state: BoardState, cardId: string, targetId?: string, position?
           ...newState.cards.activeEffects.grannyIgnore,
           state.activeMeeple
         ];
-        
-        toast({
-          title: "Card Used",
-          description: "Shadow Step: This meeple can move through a granny square this turn.",
-        });
       } else {
-        toast({
-          title: "Select a Meeple",
-          description: "You need to select a meeple to use this card on.",
-          variant: "destructive",
-        });
         return state;
       }
       break;
@@ -766,34 +680,14 @@ const useCard = (state: BoardState, cardId: string, targetId?: string, position?
     case "meditation":
       if (state.diceValue > 0) {
         newState.diceValue = Math.floor(Math.random() * 6) + 1;
-        
-        toast({
-          title: "Card Used",
-          description: `Meditation: You rerolled the dice and got a ${newState.diceValue}!`,
-        });
-      } else {
-        toast({
-          title: "Can't Use Now",
-          description: "You need to roll the dice first.",
-          variant: "destructive",
-        });
-        return state;
       }
+      
       break;
 
     case "honor_bound":
-      toast({
-        title: "Card Used",
-        description: "Honor Bound: If a gang member is caught, another can move 3 spaces.",
-      });
       break;
       
     default:
-      toast({
-        title: "Card Not Implemented",
-        description: `The ${card.name} card effect is not implemented yet.`,
-        variant: "destructive",
-      });
       return state;
   }
   
@@ -860,11 +754,6 @@ const acceptTrade = (state: BoardState): BoardState => {
   const fromHand = state.cards.playerHands[from].filter(c => c.id !== card.id);
   const toHand = [...state.cards.playerHands[to], card];
   
-  toast({
-    title: "Trade Accepted",
-    description: `${to} team received ${card.name} from ${from} team.`,
-  });
-  
   return {
     ...state,
     cards: {
@@ -884,11 +773,6 @@ const acceptTrade = (state: BoardState): BoardState => {
 };
 
 const declineTrade = (state: BoardState): BoardState => {
-  toast({
-    title: "Trade Declined",
-    description: "The trade offer was declined.",
-  });
-  
   return {
     ...state,
     cards: {
@@ -965,11 +849,6 @@ const gameReducer = (state: BoardState, action: GameAction): BoardState => {
       if (state.cells[nextPos.row][nextPos.col].type === "exit") {
         updatedPlayers[playerIndex].escaped = true;
         escaped = true;
-        
-        toast({
-          title: "Escaped!",
-          description: `${player.team} meeple has escaped!`,
-        });
       } else {
         newCells[nextPos.row][nextPos.col] = {
           ...state.cells[nextPos.row][nextPos.col],
@@ -999,11 +878,6 @@ const gameReducer = (state: BoardState, action: GameAction): BoardState => {
           if (count >= 3) {
             gameStatus = "ended";
             winner = team as Team;
-            
-            toast({
-              title: "Game Over!",
-              description: `${team} team wins with ${count} escaped meeples!`,
-            });
           }
         });
       }
@@ -1038,13 +912,11 @@ const gameReducer = (state: BoardState, action: GameAction): BoardState => {
         skippedPlayers: [...state.cards.activeEffects.skippedPlayers],
       };
       
-      // Make sure we're starting from the current player index
       let nextPlayerIndex = (state.currentPlayer + 1) % state.players.length;
       
       let loopCount = 0;
-      const maxLoops = state.players.length * 2; // Prevent infinite loops
+      const maxLoops = state.players.length * 2;
       
-      // Find the next valid player
       while (loopCount < maxLoops) {
         const nextPlayer = state.players[nextPlayerIndex];
         
@@ -1057,11 +929,10 @@ const gameReducer = (state: BoardState, action: GameAction): BoardState => {
         const isSkipped = resetActiveEffects.skippedPlayers.includes(nextPlayer.id);
         
         if (!nextPlayer.arrested && !nextPlayer.escaped && !isSkipped) {
-          break; // Found a valid player
+          break;
         }
         
         if (isSkipped) {
-          // Remove this player from the skipped list for future turns
           resetActiveEffects.skippedPlayers = resetActiveEffects.skippedPlayers.filter(
             id => id !== nextPlayer.id
           );
@@ -1071,7 +942,6 @@ const gameReducer = (state: BoardState, action: GameAction): BoardState => {
         loopCount++;
         
         if (loopCount >= maxLoops) {
-          // Fallback if we can't find any valid player
           const anyValidIndex = state.players.findIndex(p => !p.arrested && !p.escaped);
           if (anyValidIndex !== -1) {
             nextPlayerIndex = anyValidIndex;
@@ -1104,64 +974,18 @@ const gameReducer = (state: BoardState, action: GameAction): BoardState => {
       
     case "DRAW_CARD": {
       if (state.cards.justDrawn) {
-        toast({
-          title: "Card Already Drawn",
-          description: "You already drew a card this turn.",
-          variant: "destructive",
-        });
         return state;
       }
       
       if (state.cards.deck.length === 0) {
-        toast({
-          title: "Deck Empty",
-          description: "No more cards left in the deck!",
-          variant: "destructive",
-        });
         return state;
       }
       
-      const cardsToDraw = [...state.cards.deck];
-      const newCardDrawn = cardsToDraw.shift();
-      
-      if (!newCardDrawn) {
-        return state;
-      }
-      
-      toast({
-        title: "Card Drawn",
-        description: `You drew: ${newCardDrawn.name}`,
-      });
-      
-      return {
-        ...state,
-        cards: {
-          ...state.cards,
-          deck: cardsToDraw,
-          justDrawn: newCardDrawn,
-        },
-      };
+      return drawCard(state);
     }
       
     case "KEEP_CARD": {
-      if (!state.cards.justDrawn) {
-        return state;
-      }
-      
-      const currentTeam = state.players[state.currentPlayer].team;
-      const newCardDrawn = state.cards.justDrawn;
-      
-      const newHands = { ...state.cards.playerHands };
-      newHands[currentTeam] = [...newHands[currentTeam], newCardDrawn];
-      
-      return {
-        ...state,
-        cards: {
-          ...state.cards,
-          playerHands: newHands,
-          justDrawn: null,
-        },
-      };
+      return keepCard(state);
     }
       
     case "USE_CARD":
@@ -1190,9 +1014,95 @@ const GameContext = createContext<GameContextType | undefined>(undefined);
 
 export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [state, dispatch] = useReducer(gameReducer, initialState);
+  const prevAction = useRef<GameAction | null>(null);
+  
+  useEffect(() => {
+    if (!prevAction.current) return;
+    
+    const action = prevAction.current;
+    const currentTeam = state.players[state.currentPlayer]?.team;
+
+    switch (action.type) {
+      case "DRAW_CARD":
+        if (state.cards.justDrawn) {
+          if (state.cards.justDrawn.id === "empty-deck") {
+            toast({
+              title: "Deck Empty",
+              description: "No more cards left in the deck!",
+              variant: "destructive",
+            });
+          } else {
+            toast({
+              title: "Card Drawn",
+              description: `You drew: ${state.cards.justDrawn.name}`,
+            });
+          }
+        }
+        break;
+        
+      case "USE_CARD": {
+        const cardId = action.cardId;
+        let card: Card | undefined = undefined;
+        
+        Object.values(state.cards.playerHands).forEach(hand => {
+          const foundCard = hand.find(c => c.id === cardId);
+          if (foundCard) card = foundCard;
+        });
+        
+        if (card) {
+          switch (card.type) {
+            case "smoke_bomb":
+              toast({
+                title: "Card Used",
+                description: "Smoke Bomb: Your team is hidden from police this turn!",
+              });
+              break;
+            case "shortcut":
+              toast({
+                title: "Card Used",
+                description: "Shortcut: You can move diagonally this turn!",
+              });
+              break;
+          }
+        }
+        break;
+      }
+        
+      case "NEXT_TURN":
+        toast({
+          title: "Turn Ended",
+          description: `${currentTeam}'s turn has ended.`,
+        });
+        break;
+        
+      case "ACCEPT_TRADE": {
+        const { from, to, card } = state.cards.tradingOffer;
+        if (from && to && card) {
+          toast({
+            title: "Trade Accepted",
+            description: `${to} team received ${card.name} from ${from} team.`,
+          });
+        }
+        break;
+      }
+        
+      case "DECLINE_TRADE":
+        toast({
+          title: "Trade Declined",
+          description: "The trade offer was declined.",
+        });
+        break;
+    }
+    
+  }, [state, prevAction]);
+  
+  const dispatchWithSideEffects = (action: GameAction) => {
+    prevAction.current = action;
+    dispatch(action);
+  };
   
   return (
-    <GameContext.Provider value={{ state, dispatch }}>
+    <GameContext.Provider value={{ state, dispatch: dispatchWithSideEffects }}>
       {children}
     </GameContext.Provider>
   );
