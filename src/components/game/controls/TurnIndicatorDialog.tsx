@@ -14,11 +14,15 @@ import TurnStepGuide from "./TurnStepGuide";
 interface TurnIndicatorDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  isDiceRolling?: boolean;
+  onRollDice?: () => void;
 }
 
 const TurnIndicatorDialog: React.FC<TurnIndicatorDialogProps> = ({
   open,
   onOpenChange,
+  isDiceRolling,
+  onRollDice,
 }) => {
   const { state } = useGame();
   const currentTeam = state.players[state.currentPlayer]?.team;
@@ -69,4 +73,3 @@ const TurnIndicatorDialog: React.FC<TurnIndicatorDialogProps> = ({
 };
 
 export default TurnIndicatorDialog;
-
