@@ -1,4 +1,3 @@
-
 import React from "react";
 import { useGame } from "@/context/GameContext";
 import { Button } from "@/components/ui/button";
@@ -43,8 +42,8 @@ const TurnIndicatorDialog: React.FC<TurnIndicatorDialogProps> = ({
   };
 
   const determineTurnStep = () => {
-    if (!state.cards.justDrawn && state.diceValue === 0) return 1;
-    if (state.diceValue === 0) return 2;
+    if (state.diceValue === 0) return 1;
+    if (!state.cards.justDrawn && state.cards.playerHands[currentTeam || ""]?.length === 0) return 2;
     return 3;
   };
 
@@ -56,7 +55,7 @@ const TurnIndicatorDialog: React.FC<TurnIndicatorDialogProps> = ({
             {currentTeam}'s Turn
           </DialogTitle>
           <DialogDescription className="text-center">
-            Follow the turn order: Draw/Play card, Roll dice, Move meeple
+            First roll the dice, then draw/use a card, finally move your meeple
           </DialogDescription>
         </DialogHeader>
         
@@ -80,7 +79,7 @@ const TurnIndicatorDialog: React.FC<TurnIndicatorDialogProps> = ({
           ) : (
             <div className="text-center">
               <p className="mb-2 text-lg font-medium">You rolled a {state.diceValue}!</p>
-              <p className="text-sm text-gray-600 mb-2">Next, draw or play a card, then move a meeple.</p>
+              <p className="text-sm text-gray-600 mb-2">Next, draw a card or use one from your hand.</p>
             </div>
           )}
 
