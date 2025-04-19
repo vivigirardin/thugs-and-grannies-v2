@@ -45,7 +45,7 @@ const CardManager: React.FC = () => {
   };
 
   const handleUseCard = (card: Card) => {
-    if (state.diceValue > 0) {
+    if (state.diceValue === 0) {
       toast({
         title: "Can't Use Card Now",
         description: "You need to complete your movement first.",
@@ -134,7 +134,7 @@ const CardManager: React.FC = () => {
         <div className="flex justify-center mb-4">
           <Button 
             onClick={handleDrawCard} 
-            disabled={state.diceValue > 0}
+            enable={state.diceValue > 0}
             className="relative transition-all hover:bg-primary-hover active:scale-95"
           >
             Draw Card
