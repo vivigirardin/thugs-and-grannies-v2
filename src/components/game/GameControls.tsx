@@ -2,14 +2,13 @@
 import React, { useState, useEffect } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useGame } from "@/context/GameContext";
-import DiceControl from "./controls/DiceControl";
-import EndTurnButton from "./controls/EndTurnButton";
-import TurnIndicatorDialog from "./controls/TurnIndicatorDialog";
+import DiceControl from "../game/controls/DiceControl";
+import EndTurnButton from "../game/controls/EndTurnButton";
+import TurnIndicatorDialog from "../game/controls/TurnIndicatorDialog";
 
 const GameControls: React.FC = () => {
   const { state } = useGame();
   const isMobile = useIsMobile();
-  const [isDiceRolling, setIsDiceRolling] = useState(false);
   const [showTurnDialog, setShowTurnDialog] = useState(false);
 
   useEffect(() => {
@@ -17,15 +16,6 @@ const GameControls: React.FC = () => {
       setShowTurnDialog(true);
     }
   }, [state.currentPlayer, state.gameStatus]);
-
-  const handleRollDice = () => {
-    if (state.gameStatus !== "playing") return;
-    setIsDiceRolling(true);
-    
-    setTimeout(() => {
-      setIsDiceRolling(false);
-    }, 500);
-  };
 
   return (
     <div className={`flex flex-col ${isMobile ? "items-start gap-2" : "items-center gap-4"} mb-4`}>
@@ -37,8 +27,6 @@ const GameControls: React.FC = () => {
       <TurnIndicatorDialog
         open={showTurnDialog}
         onOpenChange={setShowTurnDialog}
-        isDiceRolling={isDiceRolling}
-        onRollDice={handleRollDice}
       />
     </div>
   );

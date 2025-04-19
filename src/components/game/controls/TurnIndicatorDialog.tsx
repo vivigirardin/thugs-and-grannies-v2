@@ -1,6 +1,6 @@
-
 import React from "react";
 import { useGame } from "@/context/GameContext";
+import { useCurrentTeam } from "@/hooks/use-current-team";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -21,7 +21,7 @@ const TurnIndicatorDialog: React.FC<TurnIndicatorDialogProps> = ({
   onOpenChange,
 }) => {
   const { state } = useGame();
-  const currentTeam = state.players[state.currentPlayer]?.team;
+  const currentTeam = useCurrentTeam();
 
   const getTeamColor = (team: string) => {
     switch (team) {
@@ -69,4 +69,3 @@ const TurnIndicatorDialog: React.FC<TurnIndicatorDialogProps> = ({
 };
 
 export default TurnIndicatorDialog;
-

@@ -2,6 +2,7 @@
 import React from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useGame } from "@/context/GameContext";
+import { useCurrentTeam } from "@/hooks/use-current-team";
 import { Button } from "@/components/ui/button";
 import { SkipForward } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
@@ -9,7 +10,7 @@ import { toast } from "@/hooks/use-toast";
 const EndTurnButton: React.FC = () => {
   const { state, dispatch } = useGame();
   const isMobile = useIsMobile();
-  const currentTeam = state.players[state.currentPlayer]?.team;
+  const currentTeam = useCurrentTeam();
 
   const handleEndTurn = () => {
     if (state.gameStatus !== "playing") return;

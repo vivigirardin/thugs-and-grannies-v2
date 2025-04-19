@@ -1,5 +1,7 @@
+
 import React, { useState } from "react";
 import { useGame } from "@/context/GameContext";
+import { useCurrentTeam } from "@/hooks/use-current-team";
 import { Team, Card } from "@/types/game";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
@@ -12,7 +14,7 @@ import GameCard from "./GameCard";
 
 const CardManager: React.FC = () => {
   const { state, dispatch } = useGame();
-  const currentTeam = state.players[state.currentPlayer]?.team;
+  const currentTeam = useCurrentTeam();
   const currentHand = currentTeam ? state.cards.playerHands[currentTeam] : [];
   const otherTeams = Object.keys(state.cards.playerHands).filter(team => team !== currentTeam) as Team[];
   

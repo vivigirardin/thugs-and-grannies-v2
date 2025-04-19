@@ -1,6 +1,6 @@
-
 import React from "react";
 import { useGame } from "@/context/GameContext";
+import { useCurrentTeam } from "@/hooks/use-current-team";
 import GameCell from "./GameCell";
 import { Position, Team } from "@/types/game";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -9,7 +9,7 @@ import { Trophy } from "lucide-react";
 
 const GameBoard: React.FC = () => {
   const { state, dispatch } = useGame();
-  const currentTeam = state.players[state.currentPlayer]?.team;
+  const currentTeam = useCurrentTeam();
   const selectedMeeple = state.activeMeeple 
     ? state.players.find(p => p.id === state.activeMeeple) 
     : null;
