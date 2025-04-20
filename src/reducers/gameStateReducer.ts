@@ -1,6 +1,60 @@
-
-import { BoardState, GameAction, Team } from '@/types/game';
+import { BoardState, GameAction, Team, Position } from '@/types/game';
 import { generateInitialBoard } from '@/utils/boardUtils';
+
+const addNewPoliceGrannies = (state: BoardState): Partial<BoardState> => {
+  const newPolice: Position[] = [];
+  const newGrannies: Position[] = [];
+  const cells = [...state.cells];
+  
+  // Get all empty path cells
+  const emptyCells: Position[] = [];
+  for (let row = 0; row < cells.length; row++) {
+    for (let col = 0; col < cells[row].length; col++) {
+      const cell = cells[row][col];
+      if (
+        cell.type === "path" && 
+        !cell.occupied &&
+        !state.exits.some(exit => exit.row === row && exit.col === col)
+      ) {
+        emptyCells.push({ row, col });
+      }
+    }
+  }
+  
+  // Add 3 new police if possible
+  for (let i = 0; i < 3; i++) {
+    if (emptyCells.length > 0) {
+      const randomIndex = Math.floor(Math.random() * emptyCells.length);
+      const newPos = emptyCells[randomIndex];
+      
+      cells[newPos.row][newPos.col].type = "police";
+      newPolice.push(newPos);
+      
+      // Remove used position
+      emptyCells.splice(randomIndex, 1);
+    }
+  }
+  
+  // Add 3 new grannies if possible
+  for (let i = 0; i < 3; i++) {
+    if (emptyCells.length > 0) {
+      const randomIndex = Math.floor(Math.random() * emptyCells.length);
+      const newPos = emptyCells[randomIndex];
+      
+      cells[newPos.row][newPos.col].type = "granny";
+      newGrannies.push(newPos);
+      
+      // Remove used position
+      emptyCells.splice(randomIndex, 1);
+    }
+  }
+  
+  return {
+    cells,
+    police: [...state.police, ...newPolice],
+    grannies: [...state.grannies, ...newGrannies],
+  };
+};
 
 export const gameStateReducer = (state: BoardState, action: GameAction): Partial<BoardState> => {
   switch (action.type) {
@@ -138,8 +192,12 @@ export const gameStateReducer = (state: BoardState, action: GameAction): Partial
         Next Player Index: ${nextPlayerIndex}
         Next Player Team: ${state.players[nextPlayerIndex]?.team}`);
       
-      // Return updated state with the next player
+      // Add new police and grannies after player switch
+      const newBoardState = addNewPoliceGrannies(state);
+      
+      // Return updated state with new obstacles
       return {
+        ...newBoardState,
         currentPlayer: nextPlayerIndex,
         activeMeeple: null,
         diceValue: 0, 
@@ -148,7 +206,7 @@ export const gameStateReducer = (state: BoardState, action: GameAction): Partial
         cards: {
           ...state.cards,
           activeEffects: resetActiveEffects,
-          justDrawn: null, // Clear any drawn card when turn changes
+          justDrawn: null,
         },
       };
     }
