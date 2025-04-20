@@ -1,3 +1,4 @@
+
 import { BoardState, GameAction, Team } from '@/types/game';
 import { generateInitialBoard } from '@/utils/boardUtils';
 import { drawCard, keepCard, offerTrade, acceptTrade, declineTrade } from '@/utils/cardUtils';
@@ -172,6 +173,8 @@ export const gameReducer = (state: BoardState, action: GameAction): BoardState =
     }
       
     case "NEXT_TURN": {
+      console.log("NEXT_TURN action dispatched");
+      
       let newState = { 
         ...state,
         activeMeeple: null,
@@ -219,6 +222,8 @@ export const gameReducer = (state: BoardState, action: GameAction): BoardState =
           nextPlayerIndex = validPlayerIndex;
         }
       }
+
+      console.log("Current player:", state.currentPlayer, "Next player:", nextPlayerIndex);
     
       return {
         ...newState,
@@ -250,6 +255,7 @@ export const gameReducer = (state: BoardState, action: GameAction): BoardState =
       return keepCard(state);
       
     case "USE_CARD":
+      console.log("USE_CARD action dispatched", action.cardId);
       return useCard(state, action.cardId, action.targetId, action.position);
       
     case "OFFER_TRADE":

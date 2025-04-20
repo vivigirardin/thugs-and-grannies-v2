@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useGame } from "@/context/GameContext";
 import { useCurrentTeam } from "@/hooks/use-current-team";
@@ -47,12 +46,7 @@ const CardManager: React.FC = () => {
   };
 
   const handleUseCard = (card: Card) => {
-    if (state.diceValue === 0) {
-      toast({
-        title: "Can't Use Card Now",
-        description: "You need to complete your movement first.",
-        variant: "destructive",
-      });
+    if (state.gameStatus !== "playing") {
       return;
     }
     
@@ -64,11 +58,26 @@ const CardManager: React.FC = () => {
     }
 
     dispatch({ type: "USE_CARD", cardId: card.id });
+    
+    toast({
+      title: "Card Used",
+      description: `${card.name} has been used.`,
+    });
+    
+    if (state.cards.justDrawn && state.cards.justDrawn.id === card.id) {
+      setTimeout(() => {
+        dispatch({ type: "NEXT_TURN" });
+      }, 1000);
+    }
   };
 
   const handleKeepCard = () => {
     if (state.cards.justDrawn) {
       dispatch({ type: "KEEP_CARD" });
+      
+      setTimeout(() => {
+        dispatch({ type: "NEXT_TURN" });
+      }, 500);
     }
   };
 
@@ -105,13 +114,46 @@ const CardManager: React.FC = () => {
       case "public_statement":
         if (targetPlayer) {
           dispatch({ type: "USE_CARD", cardId: selectedCard.id, targetId: targetPlayer });
+          
+          toast({
+            title: "Card Used",
+            description: `${selectedCard.name} has been used.`,
+          });
+          
+          if (state.cards.justDrawn && state.cards.justDrawn.id === selectedCard.id) {
+            setTimeout(() => {
+              dispatch({ type: "NEXT_TURN" });
+            }, 1000);
+          }
         }
         break;
       case "switcheroo":
         dispatch({ type: "USE_CARD", cardId: selectedCard.id });
+        
+        toast({
+          title: "Card Used",
+          description: `${selectedCard.name} has been used.`,
+        });
+        
+        if (state.cards.justDrawn && state.cards.justDrawn.id === selectedCard.id) {
+          setTimeout(() => {
+            dispatch({ type: "NEXT_TURN" });
+          }, 1000);
+        }
         break;
       default:
         dispatch({ type: "USE_CARD", cardId: selectedCard.id });
+        
+        toast({
+          title: "Card Used",
+          description: `${selectedCard.name} has been used.`,
+        });
+        
+        if (state.cards.justDrawn && state.cards.justDrawn.id === selectedCard.id) {
+          setTimeout(() => {
+            dispatch({ type: "NEXT_TURN" });
+          }, 1000);
+        }
     }
 
     setIsUseCardDialogOpen(false);

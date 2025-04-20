@@ -1,8 +1,26 @@
-
 import { BoardState, Position } from '@/types/game';
 
 export const useCard = (state: BoardState, cardId: string, targetId?: string, position?: Position): BoardState => {
   const currentTeam = state.players[state.currentPlayer].team;
+  
+  // First check if this is the drawn card
+  if (state.cards.justDrawn && state.cards.justDrawn.id === cardId) {
+    // Apply card effect
+    let newState = applyCardEffect(state, state.cards.justDrawn, targetId, position);
+    
+    // Clear the drawn card
+    newState = {
+      ...newState,
+      cards: {
+        ...newState.cards,
+        justDrawn: null,
+      },
+    };
+    
+    return newState;
+  }
+  
+  // Otherwise, check player's hand
   const cardIndex = state.cards.playerHands[currentTeam].findIndex(card => card.id === cardId);
   
   if (cardIndex === -1) {
@@ -10,12 +28,33 @@ export const useCard = (state: BoardState, cardId: string, targetId?: string, po
   }
   
   const card = state.cards.playerHands[currentTeam][cardIndex];
+  
+  // Apply card effect
+  let newState = applyCardEffect(state, card, targetId, position);
+  
+  // Remove the card from player's hand
+  const newPlayerHands = { ...newState.cards.playerHands };
+  const newHand = [...newPlayerHands[currentTeam]];
+  newHand.splice(cardIndex, 1);
+  newPlayerHands[currentTeam] = newHand;
+  
+  return {
+    ...newState,
+    cards: {
+      ...newState.cards,
+      playerHands: newPlayerHands,
+    },
+  };
+};
+
+// Helper function to apply card effects
+const applyCardEffect = (state: BoardState, card: any, targetId?: string, position?: Position): BoardState => {
   let newState = { ...state };
   
   switch (card.type) {
     case "smoke_bomb":
       const playerIds = state.players
-        .filter(p => p.team === currentTeam && !p.arrested && !p.escaped)
+        .filter(p => p.team === state.players[state.currentPlayer].team && !p.arrested && !p.escaped)
         .map(p => p.id);
       
       newState.cards.activeEffects.policeIgnore = [
@@ -27,14 +66,12 @@ export const useCard = (state: BoardState, cardId: string, targetId?: string, po
     case "shortcut":
       if (state.activeMeeple) {
         newState.cards.activeEffects.moveDiagonally = state.activeMeeple;
-      } else {
-        return state;
       }
       break;
 
     case "fake_pass":
       const meepleIds = state.players
-        .filter(p => p.team === currentTeam && !p.arrested && !p.escaped)
+        .filter(p => p.team === state.players[state.currentPlayer].team && !p.arrested && !p.escaped)
         .map(p => p.id);
       
       newState.cards.activeEffects.grannyIgnore = [
@@ -50,14 +87,9 @@ export const useCard = (state: BoardState, cardId: string, targetId?: string, po
           state.activeMeeple
         ];
         
-        const selectedPlayer = state.players.find(p => p.id === state.activeMeeple);
-        if (selectedPlayer) {
-          newState.immobilizedPlayers = newState.immobilizedPlayers.filter(
-            id => id !== state.activeMeeple
-          );
-        }
-      } else {
-        return state;
+        newState.immobilizedPlayers = newState.immobilizedPlayers.filter(
+          id => id !== state.activeMeeple
+        );
       }
       break;
 
@@ -90,8 +122,6 @@ export const useCard = (state: BoardState, cardId: string, targetId?: string, po
           ...newState.cards.activeEffects.grannyIgnore,
           state.activeMeeple
         ];
-      } else {
-        return state;
       }
       break;
 
@@ -102,19 +132,9 @@ export const useCard = (state: BoardState, cardId: string, targetId?: string, po
       break;
 
     default:
-      return state;
+      // No effect for unknown card types
+      break;
   }
   
-  const newPlayerHands = { ...newState.cards.playerHands };
-  const newHand = [...newPlayerHands[currentTeam]];
-  newHand.splice(cardIndex, 1);
-  newPlayerHands[currentTeam] = newHand;
-  
-  return {
-    ...newState,
-    cards: {
-      ...newState.cards,
-      playerHands: newPlayerHands,
-    },
-  };
+  return newState;
 };
