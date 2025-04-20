@@ -1,5 +1,5 @@
 
-import { BoardState, GameAction } from '@/types/game';
+import { BoardState, GameAction, Team } from '@/types/game';
 import { generateInitialBoard } from '@/utils/boardUtils';
 
 export const gameStateReducer = (state: BoardState, action: GameAction): Partial<BoardState> => {
@@ -41,14 +41,22 @@ export const gameStateReducer = (state: BoardState, action: GameAction): Partial
         policeMoveLimited: false,
         skippedPlayers: [...state.cards.activeEffects.skippedPlayers],
       };
-    
+      
+      // Get current team to ensure we switch to a different team
+      const currentTeam = state.players[state.currentPlayer].team;
+      console.log(`Current team: ${currentTeam}`);
+      
+      // Start with the next player
       let nextPlayerIndex = (state.currentPlayer + 1) % playersCount;
       console.log(`Initial next player calculation: ${nextPlayerIndex}`);
       console.log(`Next player details: ${JSON.stringify(state.players[nextPlayerIndex])}`);
       
       let loopCount = 0;
       const maxLoops = playersCount * 2;  // Increased loop protection
-    
+      
+      // First, find the next valid player from a different team
+      let foundDifferentTeam = false;
+      
       while (loopCount < maxLoops) {
         const nextPlayer = state.players[nextPlayerIndex];
         
@@ -63,27 +71,55 @@ export const gameStateReducer = (state: BoardState, action: GameAction): Partial
           Player ID: ${nextPlayer.id}
           Skipped: ${isSkipped}
           Arrested: ${nextPlayer.arrested}
-          Escaped: ${nextPlayer.escaped}`);
-    
-        // Found a valid player
-        if (!nextPlayer.arrested && !nextPlayer.escaped && !isSkipped) {
-          console.log(`Found valid next player: ${nextPlayerIndex} (${nextPlayer.team})`);
+          Escaped: ${nextPlayer.escaped}
+          Current Team: ${currentTeam}
+          Different Team: ${nextPlayer.team !== currentTeam}`);
+        
+        // Found a valid player from a different team
+        if (!nextPlayer.arrested && !nextPlayer.escaped && !isSkipped && nextPlayer.team !== currentTeam) {
+          console.log(`Found valid next player from different team: ${nextPlayerIndex} (${nextPlayer.team})`);
+          foundDifferentTeam = true;
           break;
         }
-    
+        
         // Remove skipped player from skipped list if encountered
         if (isSkipped) {
           resetActiveEffects.skippedPlayers = resetActiveEffects.skippedPlayers.filter(
             id => id !== nextPlayer.id
           );
         }
-    
+        
         // Try the next player
         nextPlayerIndex = (nextPlayerIndex + 1) % playersCount;
         loopCount++;
         console.log(`Trying next player index: ${nextPlayerIndex}`);
       }
-    
+      
+      // If no player from a different team is found, try any valid player
+      if (!foundDifferentTeam) {
+        console.log("No player from different team found, looking for any valid player");
+        nextPlayerIndex = (state.currentPlayer + 1) % playersCount;
+        loopCount = 0;
+        
+        while (loopCount < maxLoops) {
+          const nextPlayer = state.players[nextPlayerIndex];
+          
+          if (!nextPlayer) {
+            console.error(`Next player is undefined at index ${nextPlayerIndex}`);
+            break;
+          }
+          
+          // Just find any valid player if we can't find one from a different team
+          if (!nextPlayer.arrested && !nextPlayer.escaped) {
+            console.log(`Found valid player when looking for any: ${nextPlayerIndex} (${nextPlayer.team})`);
+            break;
+          }
+          
+          nextPlayerIndex = (nextPlayerIndex + 1) % playersCount;
+          loopCount++;
+        }
+      }
+      
       // Fallback if we couldn't find a valid player
       if (loopCount >= maxLoops) {
         console.log("Reached max loops, looking for any valid player");
