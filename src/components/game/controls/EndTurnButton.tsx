@@ -15,13 +15,13 @@ const EndTurnButton: React.FC = () => {
   const handleEndTurn = () => {
     if (state.gameStatus !== "playing") return;
     
+    console.log("End Turn button clicked - dispatching NEXT_TURN");
+    dispatch({ type: "NEXT_TURN" });
+    
     toast({
       title: "Turn Ended",
       description: `${currentTeam}'s turn has ended.`,
     });
-    
-    console.log("End Turn button clicked - dispatching NEXT_TURN");
-    dispatch({ type: "NEXT_TURN" });
   };
 
   return (
