@@ -1,4 +1,3 @@
-
 import React from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { GameProvider } from "@/context/GameContext";
@@ -15,22 +14,18 @@ const GameContainer: React.FC = () => {
   return (
     <GameProvider>
       <div className={`flex ${isMobile ? "flex-col" : "flex-col"} items-center gap-4 max-w-full overflow-hidden`}>
-        {/* Card Manager (Draw/Play Card) comes first in the turn order */}
         <div className={`${isMobile ? "w-full" : ""} mt-2 mb-4`}>
           <CardManager />
         </div>
         
-        {/* Game controls (Roll Dice) comes second in the turn order */}
         <div className={`${isMobile ? "w-full" : ""} mt-2 mb-2`}>
           <GameControls />
         </div>
         
-        {/* The game board shows the board and handles meeple movement */}
         <div className={`${isMobile ? "w-full" : ""} overflow-auto max-w-full`}>
           <GameBoard />
         </div>
         
-        {/* Team selector and rules last */}
         <div className={`${isMobile ? "w-full" : ""} mt-4`}>
           <TeamSelector />
         </div>
