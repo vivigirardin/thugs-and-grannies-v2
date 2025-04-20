@@ -1,15 +1,25 @@
-
+/**
+ * Displays a summary of escaped meeples for each team
+ * Shows the winner when the game has ended
+ */
 import React from "react";
 import { Team } from "@/types/game";
 import { getTeamColorClass } from "@/utils/teamUtils";
 
 interface EscapedMeeplesSummaryProps {
+  /** Record of escaped meeples count by team */
   escapedMeeples: Record<Team, number>;
+  /** The winning team, if any */
   winner: Team | null;
+  /** Current game status */
   gameStatus: "setup" | "playing" | "ended";
 }
 
-const EscapedMeeplesSummary: React.FC<EscapedMeeplesSummaryProps> = ({ 
+/**
+ * Component that shows the number of escaped meeples for each team
+ * Only displays teams that have at least one escaped meeple
+ */
+const EscapedMeeplesSummary: React.FC<EscapedMeeplesSummaryProps> = React.memo(({ 
   escapedMeeples, 
   winner,
   gameStatus 
@@ -47,6 +57,6 @@ const EscapedMeeplesSummary: React.FC<EscapedMeeplesSummaryProps> = ({
       </div>
     </div>
   );
-};
+});
 
 export default EscapedMeeplesSummary;

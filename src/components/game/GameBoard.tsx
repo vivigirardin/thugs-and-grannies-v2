@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo, useCallback } from "react";
 import { useGame } from "@/context/GameContext";
 import { useCurrentTeam } from "@/hooks/use-current-team";
 import GameCell from "./GameCell";
@@ -12,31 +12,31 @@ import JailSummary from "./JailSummary";
 const GameBoard: React.FC = () => {
   const { state, dispatch } = useGame();
   const currentTeam = useCurrentTeam();
-  const selectedMeeple = state.activeMeeple 
-    ? state.players.find(p => p.id === state.activeMeeple) 
-    : null;
 
-  // Record of escaped meeples by team
-  const escapedMeeplesByTeam = React.useMemo(() => 
-    calculateEscapedMeeples(state.players), [state.players]
+  const selectedMeeple = useMemo(() => 
+    state.activeMeeple 
+      ? state.players.find(p => p.id === state.activeMeeple) 
+      : null,
+    [state.activeMeeple, state.players]
   );
 
-  const handleCellClick = (position: Position) => {
+  const escapedMeeplesByTeam = useMemo(() => 
+    calculateEscapedMeeples(state.players), 
+    [state.players]
+  );
+
+  const handleCellClick = useCallback((position: Position) => {
     if (state.gameStatus !== "playing") {
       return;
     }
 
-    // If we have a selected meeple and dice is rolled, try to move
     if (selectedMeeple && state.diceValue > 0 && !selectedMeeple.arrested && !selectedMeeple.escaped) {
-      // Check if this is an entrance
       const targetCell = state.cells[position.row][position.col];
       if (targetCell.type === "entrance" && targetCell.connectedTo) {
-        // Special case for entrances - can move regardless of dice value
         dispatch({ type: "MOVE_PLAYER", position });
         return;
       }
       
-      // Regular move - check distance
       const dx = Math.abs(position.row - selectedMeeple.position.row);
       const dy = Math.abs(position.col - selectedMeeple.position.col);
       const distance = dx + dy;
@@ -47,7 +47,6 @@ const GameBoard: React.FC = () => {
       return;
     }
 
-    // If dice is rolled but no meeple is selected, check if there's a meeple to select
     if (state.diceValue > 0) {
       const cell = state.cells[position.row][position.col];
       if (cell.occupiedBy) {
@@ -57,9 +56,9 @@ const GameBoard: React.FC = () => {
         }
       }
     }
-  };
+  }, [state.gameStatus, selectedMeeple, state.diceValue, dispatch, currentTeam]);
 
-  const isValidMove = (rowIndex: number, colIndex: number) => {
+  const isValidMove = useCallback((rowIndex: number, colIndex: number) => {
     if (state.gameStatus !== "playing" || !selectedMeeple || 
         selectedMeeple.arrested || selectedMeeple.escaped || state.diceValue === 0) {
       return false;
@@ -71,12 +70,10 @@ const GameBoard: React.FC = () => {
     
     const cell = state.cells[rowIndex][colIndex];
     
-    // Special case for entrances - can always use them
     if (cell.type === "entrance" && !cell.occupied) {
       return true;
     }
     
-    // Can't move to occupied cells or cells with police or grannies
     if (cell.occupied || cell.type === "police" || cell.type === "granny" || (cell.type !== "path" && cell.type !== "exit")) {
       return false;
     }
@@ -116,9 +113,9 @@ const GameBoard: React.FC = () => {
     }
     
     return true;
-  };
+  }, [state.gameStatus, selectedMeeple, state.diceValue, state.immobilizedPlayers, state.cells]);
 
-  const isSelectableMeeple = (rowIndex: number, colIndex: number) => {
+  const isSelectableMeeple = useCallback((rowIndex: number, colIndex: number) => {
     if (state.gameStatus !== "playing" || state.diceValue === 0) {
       return false;
     }
@@ -135,7 +132,7 @@ const GameBoard: React.FC = () => {
     }
     
     return player && player.team === currentTeam && !player.arrested && !player.escaped;
-  };
+  }, [state.gameStatus, state.diceValue, state.cells, currentTeam]);
 
   return (
     <div className="flex flex-col items-center mb-6 overflow-auto max-w-full relative">
@@ -203,4 +200,4 @@ const GameBoard: React.FC = () => {
   );
 };
 
-export default GameBoard;
+export default React.memo(GameBoard);
