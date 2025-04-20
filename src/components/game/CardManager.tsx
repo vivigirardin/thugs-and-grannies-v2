@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { useGame } from "@/context/GameContext";
 import { useCurrentTeam } from "@/hooks/use-current-team";
@@ -10,10 +11,12 @@ import PlayerHand from "./cards/PlayerHand";
 import TradeDialog from "./cards/TradeDialog";
 import UseCardDialog from "./cards/UseCardDialog";
 import GameCard from "./GameCard";
+import { useCardActions } from "@/hooks/use-card-actions";
 
 const CardManager: React.FC = () => {
   const { state, dispatch } = useGame();
   const currentTeam = useCurrentTeam();
+  const cardActions = useCardActions();
   const currentHand = currentTeam ? state.cards.playerHands[currentTeam] : [];
   const otherTeams = Object.keys(state.cards.playerHands).filter(team => team !== currentTeam) as Team[];
   
@@ -22,28 +25,6 @@ const CardManager: React.FC = () => {
   const [isTradeDialogOpen, setIsTradeDialogOpen] = useState(false);
   const [isUseCardDialogOpen, setIsUseCardDialogOpen] = useState(false);
   const [targetPlayer, setTargetPlayer] = useState<string | null>(null);
-
-  const handleDrawCard = () => {
-    if (state.diceValue === 0) {
-      toast({
-        title: "Can't Draw Now",
-        description: "You need to roll the dice first.",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    if (state.cards.justDrawn) {
-      toast({
-        title: "Card Already Drawn",
-        description: "You already drew a card this turn.",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    dispatch({ type: "DRAW_CARD" });
-  };
 
   const handleUseCard = (card: Card) => {
     if (state.gameStatus !== "playing") {
@@ -57,35 +38,14 @@ const CardManager: React.FC = () => {
       return;
     }
 
-    dispatch({ type: "USE_CARD", cardId: card.id });
-    
-    toast({
-      title: "Card Used",
-      description: `${card.name} has been used.`,
-    });
-    
-    if (state.cards.justDrawn && state.cards.justDrawn.id === card.id) {
-      setTimeout(() => {
-        dispatch({ type: "NEXT_TURN" });
-      }, 1000);
-    }
-  };
-
-  const handleKeepCard = () => {
-    if (state.cards.justDrawn) {
-      dispatch({ type: "KEEP_CARD" });
-      
-      setTimeout(() => {
-        dispatch({ type: "NEXT_TURN" });
-      }, 500);
-    }
+    cardActions.handleUseCard(card);
   };
 
   const handleTradeCard = (card: Card) => {
-    if (state.diceValue > 0) {
+    if (state.diceValue === 0) {
       toast({
         title: "Can't Trade Now",
-        description: "You need to complete your movement first.",
+        description: "You need to roll the dice first.",
         variant: "destructive",
       });
       return;
@@ -97,12 +57,7 @@ const CardManager: React.FC = () => {
 
   const handleOfferTrade = () => {
     if (selectedCard && targetTeam && currentTeam) {
-      dispatch({ 
-        type: "OFFER_TRADE", 
-        fromTeam: currentTeam, 
-        toTeam: targetTeam, 
-        cardId: selectedCard.id 
-      });
+      cardActions.handleTradeCard(currentTeam, targetTeam, selectedCard.id);
       setIsTradeDialogOpen(false);
     }
   };
@@ -119,41 +74,12 @@ const CardManager: React.FC = () => {
             title: "Card Used",
             description: `${selectedCard.name} has been used.`,
           });
-          
-          if (state.cards.justDrawn && state.cards.justDrawn.id === selectedCard.id) {
-            setTimeout(() => {
-              dispatch({ type: "NEXT_TURN" });
-            }, 1000);
-          }
         }
         break;
       case "switcheroo":
-        dispatch({ type: "USE_CARD", cardId: selectedCard.id });
-        
-        toast({
-          title: "Card Used",
-          description: `${selectedCard.name} has been used.`,
-        });
-        
-        if (state.cards.justDrawn && state.cards.justDrawn.id === selectedCard.id) {
-          setTimeout(() => {
-            dispatch({ type: "NEXT_TURN" });
-          }, 1000);
-        }
-        break;
       default:
-        dispatch({ type: "USE_CARD", cardId: selectedCard.id });
-        
-        toast({
-          title: "Card Used",
-          description: `${selectedCard.name} has been used.`,
-        });
-        
-        if (state.cards.justDrawn && state.cards.justDrawn.id === selectedCard.id) {
-          setTimeout(() => {
-            dispatch({ type: "NEXT_TURN" });
-          }, 1000);
-        }
+        cardActions.handleUseCard(selectedCard);
+        break;
     }
 
     setIsUseCardDialogOpen(false);
@@ -170,14 +96,14 @@ const CardManager: React.FC = () => {
 
       <DrawnCard 
         card={state.cards.justDrawn}
-        onKeep={handleKeepCard}
+        onKeep={cardActions.handleKeepCard}
         onUse={handleUseCard}
       />
 
       {!state.cards.justDrawn && state.gameStatus === "playing" && (
         <div className="flex justify-center mb-4">
           <Button 
-            onClick={handleDrawCard} 
+            onClick={cardActions.handleDrawCard} 
             disabled={state.diceValue === 0}
             className="relative transition-all hover:bg-primary-hover active:scale-95"
           >
@@ -235,10 +161,10 @@ const CardManager: React.FC = () => {
             </div>
             
             <div className="flex gap-2">
-              <Button variant="secondary" onClick={() => dispatch({ type: "DECLINE_TRADE" })}>
+              <Button variant="secondary" onClick={cardActions.handleDeclineTrade}>
                 Decline
               </Button>
-              <Button onClick={() => dispatch({ type: "ACCEPT_TRADE" })}>
+              <Button onClick={cardActions.handleAcceptTrade}>
                 Accept
               </Button>
             </div>

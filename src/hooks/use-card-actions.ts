@@ -31,10 +31,7 @@ export const useCardActions = () => {
   const handleKeepCard = () => {
     if (state.cards.justDrawn) {
       dispatch({ type: "KEEP_CARD" });
-      
-      setTimeout(() => {
-        dispatch({ type: "NEXT_TURN" });
-      }, 500);
+      // Don't automatically end turn - player needs to move first
     }
   };
 
@@ -50,18 +47,14 @@ export const useCardActions = () => {
       description: `${card.name} has been used.`,
     });
     
-    if (state.cards.justDrawn && state.cards.justDrawn.id === card.id) {
-      setTimeout(() => {
-        dispatch({ type: "NEXT_TURN" });
-      }, 1000);
-    }
+    // Don't automatically end turn - player needs to move first
   };
 
   const handleTradeCard = (fromTeam: Team, toTeam: Team, cardId: string) => {
-    if (state.diceValue > 0) {
+    if (state.diceValue === 0) {
       toast({
         title: "Can't Trade Now",
-        description: "You need to complete your movement first.",
+        description: "You need to roll the dice first.",
         variant: "destructive",
       });
       return;

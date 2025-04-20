@@ -77,13 +77,13 @@ export const gameStateReducer = (state: BoardState, action: GameAction): Partial
       return {
         currentPlayer: nextPlayerIndex,
         activeMeeple: null,
-        diceValue: 0,
+        diceValue: 0, // Reset dice value when turn changes
         turnCount: state.turnCount + 1,
         canUndo: false,
         cards: {
           ...state.cards,
           activeEffects: resetActiveEffects,
-          justDrawn: null,
+          justDrawn: null, // Clear any drawn card when turn changes
         },
       };
     }

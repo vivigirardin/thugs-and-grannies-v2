@@ -79,11 +79,12 @@ export const playerReducer = (state: BoardState, action: GameAction): Partial<Bo
         });
       }
       
+      // Reset dice value to 0 and deselect meeple after move
       return {
         players: updatedPlayers,
         cells: newCells,
-        diceValue: 0,
-        activeMeeple: null,
+        diceValue: 0, // Important: Reset dice value after movement
+        activeMeeple: null, // Important: Deselect meeple after movement
         gameStatus,
         winner,
       };
