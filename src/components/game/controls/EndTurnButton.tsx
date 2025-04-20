@@ -15,15 +15,18 @@ const EndTurnButton: React.FC = () => {
   const handleEndTurn = () => {
     if (state.gameStatus !== "playing") return;
     
-    // First show the toast so user sees feedback
+    // Store the current team for the toast message
+    const previousTeam = currentTeam;
+    
+    // First dispatch the action to ensure state updates properly
+    console.log("End Turn button clicked - dispatching NEXT_TURN action");    
+    dispatch({ type: "NEXT_TURN" });
+    
+    // Then show toast after the state has been updated
     toast({
       title: "Turn Ended",
-      description: `${currentTeam}'s turn has ended.`,
+      description: `${previousTeam}'s turn has ended.`,
     });
-
-    console.log("End Turn button clicked - dispatching NEXT_TURN");    
-    // Then actually dispatch the action
-    dispatch({ type: "NEXT_TURN" });
   };
 
   return (

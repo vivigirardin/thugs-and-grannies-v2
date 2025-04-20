@@ -15,6 +15,7 @@ export const gameStateReducer = (state: BoardState, action: GameAction): Partial
       
     case "NEXT_TURN": {
       console.log("NEXT_TURN action dispatched");
+      console.log("Current player before switch:", state.currentPlayer);
       
       // Create a new object for active effects to avoid mutation
       const resetActiveEffects = {
@@ -28,27 +29,34 @@ export const gameStateReducer = (state: BoardState, action: GameAction): Partial
       };
     
       // Calculate the next player index
-      let nextPlayerIndex = (state.currentPlayer + 1) % state.players.length;
+      const playersCount = state.players.length;
+      if (playersCount === 0) {
+        console.error("No players in game state");
+        return {};
+      }
+      
+      let nextPlayerIndex = (state.currentPlayer + 1) % playersCount;
+      console.log("Initial next player calculation:", nextPlayerIndex);
+      
       let loopCount = 0;
-      const maxLoops = state.players.length;
+      const maxLoops = playersCount;
     
       // Find a valid next player (not arrested, not escaped, not skipped)
       while (loopCount < maxLoops) {
-        // Exit the loop if we've checked all players
-        if (loopCount >= state.players.length) {
-          break;
-        }
-        
         const nextPlayer = state.players[nextPlayerIndex];
-        // If no valid next player exists, this will be undefined
+        
+        // Safety check
         if (!nextPlayer) {
+          console.error("Next player is undefined at index", nextPlayerIndex);
           break;
         }
         
         const isSkipped = resetActiveEffects.skippedPlayers.includes(nextPlayer.id);
+        console.log("Checking player", nextPlayerIndex, "skipped:", isSkipped, "arrested:", nextPlayer.arrested, "escaped:", nextPlayer.escaped);
     
         // Found a valid player
         if (!nextPlayer.arrested && !nextPlayer.escaped && !isSkipped) {
+          console.log("Found valid next player:", nextPlayerIndex);
           break;
         }
     
@@ -59,19 +67,24 @@ export const gameStateReducer = (state: BoardState, action: GameAction): Partial
         }
     
         // Try the next player
-        nextPlayerIndex = (nextPlayerIndex + 1) % state.players.length;
+        nextPlayerIndex = (nextPlayerIndex + 1) % playersCount;
         loopCount++;
+        console.log("Trying next player:", nextPlayerIndex);
       }
     
       // Fallback if we couldn't find a valid player
       if (loopCount >= maxLoops) {
+        console.log("Reached max loops, looking for any valid player");
         const validPlayerIndex = state.players.findIndex(p => !p.arrested && !p.escaped);
         if (validPlayerIndex !== -1) {
           nextPlayerIndex = validPlayerIndex;
+          console.log("Fallback to valid player:", nextPlayerIndex);
+        } else {
+          console.log("No valid players found!");
         }
       }
 
-      console.log("Current player:", state.currentPlayer, "Next player:", nextPlayerIndex);
+      console.log("Final - Current player:", state.currentPlayer, "Next player:", nextPlayerIndex);
       
       // Return updated state with the next player
       return {

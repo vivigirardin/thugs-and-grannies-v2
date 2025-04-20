@@ -12,9 +12,15 @@ const GameContext = createContext<GameContextType | undefined>(undefined);
 
 export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [state, dispatch] = useReducer(gameReducer, initialState);
+  
+  // Create a wrapped dispatch function that logs actions
+  const dispatchWithLogging = (action: GameAction) => {
+    console.log("Dispatching action:", action.type);
+    dispatch(action);
+  };
 
   return (
-    <GameContext.Provider value={{ state, dispatch }}>
+    <GameContext.Provider value={{ state, dispatch: dispatchWithLogging }}>
       {children}
     </GameContext.Provider>
   );
