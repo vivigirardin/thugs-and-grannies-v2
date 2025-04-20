@@ -5,13 +5,7 @@ import { Position, Team } from "@/types/game";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Dice1, Dice2, Dice3, Dice4, Dice5, Dice6, Trophy } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import "./game/GameStyles.css";
 
 const GameBoard: React.FC = () => {
@@ -21,7 +15,6 @@ const GameBoard: React.FC = () => {
   const selectedMeeple = state.activeMeeple 
     ? state.players.find(p => p.id === state.activeMeeple) 
     : null;
-  const [showTurnDialog, setShowTurnDialog] = useState(false);
 
   const escapedMeeplesByTeam = useMemo(() => {
     const escaped: Record<Team, number> = {
@@ -196,12 +189,6 @@ const GameBoard: React.FC = () => {
     }
   };
 
-  React.useEffect(() => {
-    if (state.gameStatus === "playing" && state.diceValue === 0) {
-      setShowTurnDialog(true);
-    }
-  }, [state.currentPlayer, state.gameStatus]);
-
   return (
     <div className="flex flex-col items-center mb-6 overflow-auto max-w-full relative">
       <div className="bg-game-board p-2 rounded-lg shadow-lg">
@@ -264,31 +251,6 @@ const GameBoard: React.FC = () => {
           </div>
         </div>
       )}
-
-      <Dialog open={showTurnDialog} onOpenChange={setShowTurnDialog}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle className="text-center capitalize">
-              {currentTeam}'s Turn
-            </DialogTitle>
-            <DialogDescription className="text-center">
-              Roll the dice to determine how far you can move.
-            </DialogDescription>
-          </DialogHeader>
-          
-          <div className="flex flex-col items-center gap-6 py-4">
-            <div className={`p-4 rounded-full ${getTeamColor(currentTeam || "")}`}>
-              {/* Dice display now handled by DiceControl */}
-            </div>
-            
-            <div className="text-center">
-              <p className="text-sm text-gray-600">
-                Use the Roll Dice button in the game controls.
-              </p>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
 
       {Object.keys(jailedPlayersByTeam).length > 0 && (
         <div className="mt-6 p-3 bg-gray-800 rounded-lg w-full max-w-xl">
