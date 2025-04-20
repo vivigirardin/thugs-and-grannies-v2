@@ -11,7 +11,7 @@ const Index = () => {
       <div className="container mx-auto">
         <header className="text-center mb-4 md:mb-6">
           <h1 className={`${isMobile ? "text-2xl" : "text-4xl"} font-bold text-gray-800 mb-2`}>
-            Thugs and Grannies
+            Grannies and Thugs
           </h1>
           <p className="text-gray-600 max-w-md mx-auto text-sm md:text-base">
             Escape town before the grannies slow you down or the police catch you!
@@ -23,7 +23,7 @@ const Index = () => {
         </main>
         
         <footer className="mt-4 md:mt-8 text-center text-gray-500 text-xs md:text-sm">
-          <p>© {new Date().getFullYear()} Thugs and Grannies. All rights reserved.</p>
+          <p>© {new Date().getFullYear()} Grannies and Thugs. All rights reserved.</p>
         </footer>
       </div>
     </div>
