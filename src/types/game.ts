@@ -1,10 +1,63 @@
 
-export type SquareType = "path" | "exit" | "entrance" | "police" | "granny" | "city" | "library" | "school" | "townhall";
-
-export interface Position {
+// Basic types
+export type Position = {
   row: number;
   col: number;
+};
+
+// Discriminated unions for better type safety
+export type SquareType = 
+  | "path" 
+  | "exit" 
+  | "entrance" 
+  | "police" 
+  | "granny" 
+  | "city" 
+  | "library" 
+  | "school" 
+  | "townhall";
+
+export type Team = "gang" | "mafia" | "politicians" | "cartel";
+
+// More specific card types
+export type CardEffect = 
+  | { type: "movement"; range: number }
+  | { type: "special"; effect: string }
+  | { type: "combat"; power: number };
+
+export type CardType = 
+  | "smoke_bomb" 
+  | "shortcut" 
+  | "fake_pass" 
+  | "switcheroo" 
+  | "dumpster_dive" 
+  | "shiv"
+  | "lookout" 
+  | "bribe" 
+  | "getaway_car" 
+  | "cover_story" 
+  | "lobbyist" 
+  | "public_statement" 
+  | "red_tape" 
+  | "shadow_step" 
+  | "meditation" 
+  | "honor_bound"
+  | "empty";
+
+export interface Card {
+  id: string;
+  type: CardType;
+  name: string;
+  description: string;
+  flavor?: string;
+  team?: Team;
+  used: boolean;
+  icon?: string;
+  effect?: CardEffect;
 }
+
+// Game state types
+export type GameStatus = "setup" | "playing" | "ended";
 
 export interface Square {
   type: SquareType;
@@ -13,8 +66,6 @@ export interface Square {
   occupiedBy?: string;
   connectedTo?: Position;
 }
-
-export type Team = "gang" | "mafia" | "politicians" | "cartel";
 
 export interface Meeple {
   id: string;
@@ -43,7 +94,7 @@ export interface BoardState {
   currentPlayer: number;
   activeMeeple: string | null;
   diceValue: number;
-  gameStatus: "setup" | "playing" | "ended";
+  gameStatus: GameStatus;
   winner: Team | null;
   turnCount: number;
   policeChains: Position[][];
@@ -73,36 +124,6 @@ export interface BoardState {
   };
 }
 
-export type CardType = 
-  | "smoke_bomb" 
-  | "shortcut" 
-  | "fake_pass" 
-  | "switcheroo" 
-  | "dumpster_dive" 
-  | "shiv"
-  | "lookout" 
-  | "bribe" 
-  | "getaway_car" 
-  | "cover_story" 
-  | "lobbyist" 
-  | "public_statement" 
-  | "red_tape" 
-  | "shadow_step" 
-  | "meditation" 
-  | "honor_bound"
-  | "empty"; // Special type for empty deck message
-
-export interface Card {
-  id: string;
-  type: CardType;
-  name: string;
-  description: string;
-  flavor?: string;
-  team?: Team;
-  used: boolean;
-  icon?: string;
-}
-
 export type GameAction =
   | { type: "START_GAME"; teams: Team[] }
   | { type: "ROLL_DICE" }
@@ -117,3 +138,4 @@ export type GameAction =
   | { type: "OFFER_TRADE"; fromTeam: Team; toTeam: Team; cardId: string }
   | { type: "ACCEPT_TRADE" }
   | { type: "DECLINE_TRADE" };
+
