@@ -180,7 +180,7 @@ export const gameReducer = (state: BoardState, action: GameAction): BoardState =
         turnCount: state.turnCount + 1,
         canUndo: false,
       };
-      
+    
       const resetActiveEffects = {
         policeIgnore: [],
         grannyIgnore: [],
@@ -190,47 +190,36 @@ export const gameReducer = (state: BoardState, action: GameAction): BoardState =
         policeMoveLimited: false,
         skippedPlayers: [...state.cards.activeEffects.skippedPlayers],
       };
-      
+    
       let nextPlayerIndex = (state.currentPlayer + 1) % state.players.length;
-      
       let loopCount = 0;
-      const maxLoops = state.players.length * 2;
-      
+      const maxLoops = state.players.length;
+    
       while (loopCount < maxLoops) {
         const nextPlayer = state.players[nextPlayerIndex];
-        
-        if (!nextPlayer) {
-          nextPlayerIndex = (nextPlayerIndex + 1) % state.players.length;
-          loopCount++;
-          continue;
-        }
-        
         const isSkipped = resetActiveEffects.skippedPlayers.includes(nextPlayer.id);
-        
+    
         if (!nextPlayer.arrested && !nextPlayer.escaped && !isSkipped) {
-          break;
+          break; // Valid next player found
         }
-        
+    
         if (isSkipped) {
+          // Remove skipped player from list (used once)
           resetActiveEffects.skippedPlayers = resetActiveEffects.skippedPlayers.filter(
             id => id !== nextPlayer.id
           );
         }
-        
+    
         nextPlayerIndex = (nextPlayerIndex + 1) % state.players.length;
         loopCount++;
-        
-        if (loopCount >= maxLoops) {
-          const anyValidIndex = state.players.findIndex(p => !p.arrested && !p.escaped);
-          if (anyValidIndex !== -1) {
-            nextPlayerIndex = anyValidIndex;
-          } else {
-            nextPlayerIndex = 0;
-          }
-          break;
-        }
       }
-      
+    
+      // Fallback if everyone is arrested/escaped (avoid infinite loop)
+      const validPlayerIndex = state.players.findIndex(p => !p.arrested && !p.escaped);
+      if (loopCount >= maxLoops && validPlayerIndex !== -1) {
+        nextPlayerIndex = validPlayerIndex;
+      }
+    
       return {
         ...newState,
         currentPlayer: nextPlayerIndex,
@@ -241,6 +230,7 @@ export const gameReducer = (state: BoardState, action: GameAction): BoardState =
         },
       };
     }
+    
       
     case "UNDO_MOVE":
       if (state.previousState) {
