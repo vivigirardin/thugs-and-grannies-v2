@@ -14,9 +14,10 @@ export const gameStateReducer = (state: BoardState, action: GameAction): Partial
       };
       
     case "NEXT_TURN": {
-      console.log("DETAILED DEBUG: NEXT_TURN action started");
-      console.log("CURRENT STATE:", JSON.stringify({
+      console.log("NEXT_TURN action started");
+      console.log("Current Game State:", JSON.stringify({
         currentPlayer: state.currentPlayer,
+        totalPlayers: state.players.length,
         players: state.players.map(p => ({
           id: p.id, 
           team: p.team, 
@@ -31,7 +32,6 @@ export const gameStateReducer = (state: BoardState, action: GameAction): Partial
         return {};
       }
       
-      // Create a new object for active effects to avoid mutation
       const resetActiveEffects = {
         policeIgnore: [],
         grannyIgnore: [],
@@ -44,9 +44,10 @@ export const gameStateReducer = (state: BoardState, action: GameAction): Partial
     
       let nextPlayerIndex = (state.currentPlayer + 1) % playersCount;
       console.log(`Initial next player calculation: ${nextPlayerIndex}`);
+      console.log(`Next player details: ${JSON.stringify(state.players[nextPlayerIndex])}`);
       
       let loopCount = 0;
-      const maxLoops = playersCount;
+      const maxLoops = playersCount * 2;  // Increased loop protection
     
       while (loopCount < maxLoops) {
         const nextPlayer = state.players[nextPlayerIndex];
@@ -59,6 +60,7 @@ export const gameStateReducer = (state: BoardState, action: GameAction): Partial
         const isSkipped = resetActiveEffects.skippedPlayers.includes(nextPlayer.id);
         console.log(`Evaluating player ${nextPlayerIndex}:
           Team: ${nextPlayer.team}
+          Player ID: ${nextPlayer.id}
           Skipped: ${isSkipped}
           Arrested: ${nextPlayer.arrested}
           Escaped: ${nextPlayer.escaped}`);
