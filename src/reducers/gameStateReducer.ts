@@ -14,8 +14,22 @@ export const gameStateReducer = (state: BoardState, action: GameAction): Partial
       };
       
     case "NEXT_TURN": {
-      console.log("NEXT_TURN action dispatched");
-      console.log("Current player before switch:", state.currentPlayer);
+      console.log("DETAILED DEBUG: NEXT_TURN action started");
+      console.log("CURRENT STATE:", JSON.stringify({
+        currentPlayer: state.currentPlayer,
+        players: state.players.map(p => ({
+          id: p.id, 
+          team: p.team, 
+          arrested: p.arrested, 
+          escaped: p.escaped
+        }))
+      }, null, 2));
+      
+      const playersCount = state.players.length;
+      if (playersCount === 0) {
+        console.error("No players in game state");
+        return {};
+      }
       
       // Create a new object for active effects to avoid mutation
       const resetActiveEffects = {
@@ -28,38 +42,34 @@ export const gameStateReducer = (state: BoardState, action: GameAction): Partial
         skippedPlayers: [...state.cards.activeEffects.skippedPlayers],
       };
     
-      // Calculate the next player index
-      const playersCount = state.players.length;
-      if (playersCount === 0) {
-        console.error("No players in game state");
-        return {};
-      }
-      
       let nextPlayerIndex = (state.currentPlayer + 1) % playersCount;
-      console.log("Initial next player calculation:", nextPlayerIndex);
+      console.log(`Initial next player calculation: ${nextPlayerIndex}`);
       
       let loopCount = 0;
       const maxLoops = playersCount;
     
-      // Find a valid next player (not arrested, not escaped, not skipped)
       while (loopCount < maxLoops) {
         const nextPlayer = state.players[nextPlayerIndex];
         
-        // Safety check
         if (!nextPlayer) {
-          console.error("Next player is undefined at index", nextPlayerIndex);
+          console.error(`Next player is undefined at index ${nextPlayerIndex}`);
           break;
         }
         
         const isSkipped = resetActiveEffects.skippedPlayers.includes(nextPlayer.id);
-        console.log("Checking player", nextPlayerIndex, "skipped:", isSkipped, "arrested:", nextPlayer.arrested, "escaped:", nextPlayer.escaped);
+        console.log(`Evaluating player ${nextPlayerIndex}:
+          Team: ${nextPlayer.team}
+          Skipped: ${isSkipped}
+          Arrested: ${nextPlayer.arrested}
+          Escaped: ${nextPlayer.escaped}`);
     
         // Found a valid player
         if (!nextPlayer.arrested && !nextPlayer.escaped && !isSkipped) {
-          console.log("Found valid next player:", nextPlayerIndex);
+          console.log(`Found valid next player: ${nextPlayerIndex} (${nextPlayer.team})`);
           break;
         }
     
+        // Remove skipped player from skipped list if encountered
         if (isSkipped) {
           resetActiveEffects.skippedPlayers = resetActiveEffects.skippedPlayers.filter(
             id => id !== nextPlayer.id
@@ -69,7 +79,7 @@ export const gameStateReducer = (state: BoardState, action: GameAction): Partial
         // Try the next player
         nextPlayerIndex = (nextPlayerIndex + 1) % playersCount;
         loopCount++;
-        console.log("Trying next player:", nextPlayerIndex);
+        console.log(`Trying next player index: ${nextPlayerIndex}`);
       }
     
       // Fallback if we couldn't find a valid player
@@ -78,19 +88,23 @@ export const gameStateReducer = (state: BoardState, action: GameAction): Partial
         const validPlayerIndex = state.players.findIndex(p => !p.arrested && !p.escaped);
         if (validPlayerIndex !== -1) {
           nextPlayerIndex = validPlayerIndex;
-          console.log("Fallback to valid player:", nextPlayerIndex);
+          console.log(`Fallback to valid player: ${nextPlayerIndex}`);
         } else {
           console.log("No valid players found!");
         }
       }
 
-      console.log("Final - Current player:", state.currentPlayer, "Next player:", nextPlayerIndex);
+      console.log(`FINAL Turn Switch:
+        Previous Player Index: ${state.currentPlayer}
+        Previous Player Team: ${state.players[state.currentPlayer]?.team}
+        Next Player Index: ${nextPlayerIndex}
+        Next Player Team: ${state.players[nextPlayerIndex]?.team}`);
       
       // Return updated state with the next player
       return {
         currentPlayer: nextPlayerIndex,
         activeMeeple: null,
-        diceValue: 0, // Reset dice value when turn changes
+        diceValue: 0, 
         turnCount: state.turnCount + 1,
         canUndo: false,
         cards: {
@@ -100,15 +114,6 @@ export const gameStateReducer = (state: BoardState, action: GameAction): Partial
         },
       };
     }
-      
-    case "UNDO_MOVE":
-      if (state.previousState) {
-        return {
-          ...state.previousState,
-          canUndo: false,
-        };
-      }
-      return {};
       
     default:
       return {};
