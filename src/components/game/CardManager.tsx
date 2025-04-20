@@ -136,7 +136,7 @@ const CardManager: React.FC = () => {
         <div className="flex justify-center mb-4">
           <Button 
             onClick={handleDrawCard} 
-            enable={state.diceValue > 0}
+            disabled={state.diceValue === 0}
             className="relative transition-all hover:bg-primary-hover active:scale-95"
           >
             Draw Card

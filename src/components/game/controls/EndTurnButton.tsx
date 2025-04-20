@@ -20,9 +20,7 @@ const EndTurnButton: React.FC = () => {
       description: `${currentTeam}'s turn has ended.`,
     });
     
-    setTimeout(() => {
-      dispatch({ type: "NEXT_TURN" });
-    }, 10);
+    dispatch({ type: "NEXT_TURN" });
   };
 
   return (

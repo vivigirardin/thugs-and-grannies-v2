@@ -1,14 +1,21 @@
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useGame } from "@/context/GameContext";
-import DiceControl from "./controls/DiceControl";
-import EndTurnButton from "./controls/EndTurnButton";
-import TurnIndicatorDialog from "./controls/TurnIndicatorDialog";
+import DiceControl from "@/components/game/controls/DiceControl";
+import EndTurnButton from "@/components/game/controls/EndTurnButton";
+import TurnIndicatorDialog from "@/components/game/controls/TurnIndicatorDialog";
 
 const GameControls: React.FC = () => {
   const { state } = useGame();
   const isMobile = useIsMobile();
+  const [showTurnDialog, setShowTurnDialog] = useState(false);
+
+  useEffect(() => {
+    if (state.gameStatus === "playing" && state.diceValue === 0) {
+      setShowTurnDialog(true);
+    }
+  }, [state.currentPlayer, state.gameStatus]);
 
   return (
     <div className={`flex flex-col ${isMobile ? "items-start gap-2" : "items-center gap-4"} mb-4`}>
@@ -18,12 +25,11 @@ const GameControls: React.FC = () => {
       </div>
       
       <TurnIndicatorDialog
-        open={state.gameStatus === "playing" && state.diceValue === 0}
-        onOpenChange={() => {}}
+        open={showTurnDialog}
+        onOpenChange={setShowTurnDialog}
       />
     </div>
   );
 };
 
 export default GameControls;
-

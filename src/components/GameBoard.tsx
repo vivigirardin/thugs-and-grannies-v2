@@ -3,8 +3,7 @@ import { useGame } from "@/context/GameContext";
 import GameCell from "./game/GameCell";
 import { Position, Team } from "@/types/game";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
-import { Dice1, Dice2, Dice3, Dice4, Dice5, Dice6, SkipForward, Trophy } from "lucide-react";
+import { Dice1, Dice2, Dice3, Dice4, Dice5, Dice6, Trophy } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import {
   Dialog,
@@ -290,19 +289,6 @@ const GameBoard: React.FC = () => {
           </div>
         </DialogContent>
       </Dialog>
-
-      <div className="fixed right-4 top-1/2 transform -translate-y-1/2 z-10">
-        <Button 
-          onClick={handleEndTurn}
-          variant="outline"
-          size="lg"
-          className="flex flex-col items-center gap-1 bg-white shadow-lg"
-          disabled={state.gameStatus !== "playing"}
-        >
-          <SkipForward className="w-6 h-6" />
-          <span className="text-xs">End Turn</span>
-        </Button>
-      </div>
 
       {Object.keys(jailedPlayersByTeam).length > 0 && (
         <div className="mt-6 p-3 bg-gray-800 rounded-lg w-full max-w-xl">

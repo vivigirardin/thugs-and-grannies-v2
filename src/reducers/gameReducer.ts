@@ -1,4 +1,3 @@
-
 import { BoardState, GameAction, Team } from '@/types/game';
 import { generateInitialBoard } from '@/utils/boardUtils';
 import { drawCard, keepCard, offerTrade, acceptTrade, declineTrade } from '@/utils/cardUtils';
@@ -214,10 +213,11 @@ export const gameReducer = (state: BoardState, action: GameAction): BoardState =
         loopCount++;
       }
     
-      // Fallback if everyone is arrested/escaped (avoid infinite loop)
-      const validPlayerIndex = state.players.findIndex(p => !p.arrested && !p.escaped);
-      if (loopCount >= maxLoops && validPlayerIndex !== -1) {
-        nextPlayerIndex = validPlayerIndex;
+      if (loopCount >= maxLoops) {
+        const validPlayerIndex = state.players.findIndex(p => !p.arrested && !p.escaped);
+        if (validPlayerIndex !== -1) {
+          nextPlayerIndex = validPlayerIndex;
+        }
       }
     
       return {
@@ -230,7 +230,6 @@ export const gameReducer = (state: BoardState, action: GameAction): BoardState =
         },
       };
     }
-    
       
     case "UNDO_MOVE":
       if (state.previousState) {
