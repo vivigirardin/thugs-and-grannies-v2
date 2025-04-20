@@ -2,10 +2,12 @@ import React from "react";
 import { useGame } from "@/context/GameContext";
 import { useCurrentTeam } from "@/hooks/use-current-team";
 import GameCell from "./GameCell";
-import { Position, Team } from "@/types/game";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Position } from "@/types/game";
 import { Button } from "@/components/ui/button";
 import { Trophy } from "lucide-react";
+import { calculateEscapedMeeples } from "@/utils/teamUtils";
+import EscapedMeeplesSummary from "./EscapedMeeplesSummary";
+import JailSummary from "./JailSummary";
 
 const GameBoard: React.FC = () => {
   const { state, dispatch } = useGame();
@@ -15,39 +17,9 @@ const GameBoard: React.FC = () => {
     : null;
 
   // Record of escaped meeples by team
-  const escapedMeeplesByTeam = React.useMemo(() => {
-    const escaped: Record<Team, number> = {
-      gang: 0,
-      mafia: 0,
-      politicians: 0,
-      cartel: 0
-    };
-    
-    state.players.forEach(player => {
-      if (player.escaped) {
-        escaped[player.team]++;
-      }
-    });
-    
-    return escaped;
-  }, [state.players]);
-  
-  // Determine the team with most escaped meeples
-  const mostEscapedMeeples = React.useMemo(() => {
-    let maxTeam: Team | null = null;
-    let maxCount = 0;
-    
-    (Object.entries(escapedMeeplesByTeam) as [Team, number][]).forEach(([team, count]) => {
-      if (count > maxCount) {
-        maxCount = count;
-        maxTeam = team;
-      }
-    });
-    
-    return { team: maxTeam, count: maxCount };
-  }, [escapedMeeplesByTeam]);
-
-  const hasEscapedMeeples = Object.values(escapedMeeplesByTeam).some(count => count > 0);
+  const escapedMeeplesByTeam = React.useMemo(() => 
+    calculateEscapedMeeples(state.players), [state.players]
+  );
 
   const handleCellClick = (position: Position) => {
     if (state.gameStatus !== "playing") {
@@ -165,37 +137,6 @@ const GameBoard: React.FC = () => {
     return player && player.team === currentTeam && !player.arrested && !player.escaped;
   };
 
-  const getJailedPlayersByTeam = () => {
-    const jailed = state.players.filter(p => p.arrested);
-    const byTeam: Record<string, typeof jailed> = {};
-    
-    jailed.forEach(player => {
-      if (!byTeam[player.team]) {
-        byTeam[player.team] = [];
-      }
-      byTeam[player.team].push(player);
-    });
-    
-    return byTeam;
-  };
-
-  const jailedPlayersByTeam = getJailedPlayersByTeam();
-
-  const getTeamColor = (team: string) => {
-    switch (team) {
-      case "gang":
-        return "bg-game-gang text-white";
-      case "mafia":
-        return "bg-game-mafia text-white";
-      case "politicians":
-        return "bg-game-politicians text-white";
-      case "cartel":
-        return "bg-game-cartel text-white";
-      default:
-        return "bg-gray-500 text-white";
-    }
-  };
-
   return (
     <div className="flex flex-col items-center mb-6 overflow-auto max-w-full relative">
       <div className="bg-game-board p-2 rounded-lg shadow-lg">
@@ -251,67 +192,13 @@ const GameBoard: React.FC = () => {
         )}
       </div>
 
-      {Object.values(escapedMeeplesByTeam).some(count => count > 0) && (
-        <div className="escaped-meeples mt-4">
-          <div className="flex items-center mb-2">
-            <div className="w-6 h-6 mr-2 flex items-center justify-center text-white">
-              🏃
-            </div>
-            <h3 className="text-white font-bold">Escaped Meeples</h3>
-          </div>
-          <div className="flex flex-wrap gap-4">
-            {(Object.entries(escapedMeeplesByTeam) as [Team, number][]).map(([team, count]) => {
-              if (count === 0) return null;
-              
-              const isWinner = state.gameStatus === "ended" && team === state.winner;
-              
-              return (
-                <div key={team} className="flex flex-col items-center">
-                  <div className="mb-1 text-xs text-white capitalize flex items-center">
-                    {team}
-                    {isWinner && <span className="winner-badge">Winner!</span>}
-                  </div>
-                  <div className="flex items-center">
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center ${getTeamColor(team)}`}>
-                      {count}
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
+      <EscapedMeeplesSummary 
+        escapedMeeples={escapedMeeplesByTeam}
+        winner={state.winner}
+        gameStatus={state.gameStatus}
+      />
 
-      {Object.keys(jailedPlayersByTeam).length > 0 && (
-        <div className="mt-6 p-3 bg-gray-800 rounded-lg w-full max-w-xl">
-          <div className="flex items-center mb-2">
-            <div className="w-6 h-6 mr-2 flex items-center justify-center text-white">
-              👮
-            </div>
-            <h3 className="text-white font-bold">Jail</h3>
-          </div>
-          <div className="flex flex-wrap gap-4">
-            {Object.entries(jailedPlayersByTeam).map(([team, players]) => (
-              <div key={team} className="flex flex-col items-center">
-                <div className="mb-1 text-xs text-gray-300 capitalize">{team}</div>
-                <div className="flex flex-wrap gap-2">
-                  {players.map(player => (
-                    <Avatar 
-                      key={player.id} 
-                      className={`w-8 h-8 ${getTeamColor(team)}`}
-                    >
-                      <AvatarFallback className="text-xs">
-                        {player.team.slice(0, 1).toUpperCase()}
-                      </AvatarFallback>
-                    </Avatar>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
+      <JailSummary players={state.players} />
     </div>
   );
 };
