@@ -26,7 +26,7 @@ const GameCell: React.FC<GameCellProps> = ({
       case "path":
         return "bg-game-path";
       case "exit":
-        return "bg-green-500 hover:bg-green-600 transition-colors";
+        return "bg-game-exit";
       case "police":
         return "bg-game-police";
       case "granny":
