@@ -1,4 +1,3 @@
-
 import { BoardState, Team, Position, Square } from '@/types/game';
 import { createCardDeck } from './cardUtils';
 
@@ -53,10 +52,10 @@ export const generateInitialBoard = (teams: Team[]): BoardState => {
     police: [],
     grannies: [],
     exits: [
-      { row: 8, col: 0 },
-      { row: 12, col: 0 },
-      { row: 8, col: BOARD_SIZE - 1 },
-      { row: 12, col: BOARD_SIZE - 1 },
+      { row: 0, col: 9 },
+      { row: 0, col: 13 },
+      { row: 19, col: 9 },
+      { row: 19, col: 13 },
     ],
     jailedPlayers: [],
     landmarks: {

@@ -31,10 +31,10 @@ export const initialState: BoardState = {
   police: [],
   grannies: [],
   exits: [
-    { row: 8, col: 0 },
-    { row: 12, col: 0 },
-    { row: 8, col: 19 },
-    { row: 12, col: 19 },
+    { row: 0, col: 9 },
+    { row: 0, col: 13 },
+    { row: 19, col: 9 },
+    { row: 19, col: 13 },
   ],
   jailedPlayers: [],
   landmarks: {
