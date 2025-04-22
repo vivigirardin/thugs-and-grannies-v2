@@ -27,64 +27,66 @@ export const playerReducer = (state: BoardState, action: GameAction): Partial<Bo
       const oldPos = player.position;
       const newPos = action.position;
       
-      const targetCell = state.cells[newPos.row][newPos.col];
-      let nextPos = newPos;
-      
-      if (targetCell.type === "entrance" && targetCell.connectedTo) {
-        nextPos = targetCell.connectedTo;
-      }
+      // Check if the target cell is an exit
+      const isExitCell = state.exits.some(exit => 
+        exit.row === newPos.row && exit.col === newPos.col
+      );
       
       const updatedPlayers = [...state.players];
-      updatedPlayers[playerIndex] = {
-        ...player,
-        position: nextPos,
-      };
-      
       const newCells = [...state.cells];
       
+      // Clear the old cell
       newCells[oldPos.row][oldPos.col] = {
         ...state.cells[oldPos.row][oldPos.col],
         occupied: false,
         occupiedBy: undefined,
       };
       
-      let escaped = false;
-      if (state.cells[nextPos.row][nextPos.col].type === "exit") {
-        updatedPlayers[playerIndex].escaped = true;
-        escaped = true;
+      // Handle escape
+      if (isExitCell) {
+        // Mark player as escaped and remove from board
+        updatedPlayers[playerIndex] = {
+          ...player,
+          position: newPos,
+          escaped: true,
+        };
       } else {
-        newCells[nextPos.row][nextPos.col] = {
-          ...state.cells[nextPos.row][nextPos.col],
+        // Regular movement
+        updatedPlayers[playerIndex] = {
+          ...player,
+          position: newPos,
+        };
+        
+        newCells[newPos.row][newPos.col] = {
+          ...state.cells[newPos.row][newPos.col],
           occupied: true,
           occupiedBy: playerId,
         };
       }
       
+      // Check winning condition - team with 3 or more escaped members wins
       let gameStatus = state.gameStatus;
       let winner = state.winner;
       
-      if (escaped) {
-        const escapedCounts = updatedPlayers.reduce((counts, p) => {
-          if (p.escaped) {
-            counts[p.team] = (counts[p.team] || 0) + 1;
-          }
-          return counts;
-        }, {} as Record<string, number>);
-        
-        Object.entries(escapedCounts).forEach(([team, count]) => {
-          if (count >= 3) {
-            gameStatus = "ended";
-            winner = team as any;
-          }
-        });
-      }
+      const escapedCounts = updatedPlayers.reduce((counts, p) => {
+        if (p.escaped) {
+          counts[p.team] = (counts[p.team] || 0) + 1;
+        }
+        return counts;
+      }, {} as Record<string, number>);
       
-      // Reset dice value to 0 and deselect meeple after move
+      Object.entries(escapedCounts).forEach(([team, count]) => {
+        if (count >= 3) {
+          gameStatus = "ended";
+          winner = team as any;
+        }
+      });
+      
       return {
         players: updatedPlayers,
         cells: newCells,
-        diceValue: 0, // Important: Reset dice value after movement
-        activeMeeple: null, // Important: Deselect meeple after movement
+        diceValue: 0,
+        activeMeeple: null,
         gameStatus,
         winner,
       };

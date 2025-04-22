@@ -1,8 +1,7 @@
-
 import React from "react";
 import { Square } from "@/types/game";
 import { useGame } from "@/context/GameContext";
-import { Shield, User, LogOut, CircleDot, Building, Library, School, Building2, DoorOpen } from "lucide-react";
+import { Shield, User, LogOut, CircleDot, Building, Library, School, Building2, DoorOpen, Goal } from "lucide-react";
 
 interface GameCellProps {
   cell: Square;
@@ -27,7 +26,7 @@ const GameCell: React.FC<GameCellProps> = ({
       case "path":
         return "bg-game-path";
       case "exit":
-        return "bg-game-exit";
+        return "bg-green-500 hover:bg-green-600 transition-colors";
       case "police":
         return "bg-game-police";
       case "granny":
@@ -49,7 +48,6 @@ const GameCell: React.FC<GameCellProps> = ({
 
   const getPlayerClass = () => {
     if (!player) return "";
-    
     
     let baseClass = "";
     switch (player.team) {
@@ -98,7 +96,11 @@ const GameCell: React.FC<GameCellProps> = ({
       }`}
       onClick={onClick}
     >
-      {cell.type === "exit" && <LogOut className="w-6 h-6 text-white" />}
+      {cell.type === "exit" && (
+        <div className="absolute inset-0 flex items-center justify-center">
+          <Goal className="w-6 h-6 text-white animate-pulse" />
+        </div>
+      )}
       {cell.type === "police" && (
         <div className="text-xs font-bold police-icon">👮</div>
       )}
