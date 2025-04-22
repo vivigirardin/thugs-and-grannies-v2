@@ -32,6 +32,14 @@ export const playerReducer = (state: BoardState, action: GameAction): Partial<Bo
         exit.row === newPos.row && exit.col === newPos.col
       );
       
+      console.log("Move player action:", {
+        playerId,
+        oldPosition: oldPos,
+        newPosition: newPos,
+        isExitCell,
+        exits: state.exits
+      });
+      
       const updatedPlayers = [...state.players];
       const newCells = [...state.cells];
       
@@ -44,6 +52,8 @@ export const playerReducer = (state: BoardState, action: GameAction): Partial<Bo
       
       // Handle escape
       if (isExitCell) {
+        console.log("Player escaped:", playerId);
+        
         // Mark player as escaped and remove from board
         updatedPlayers[playerIndex] = {
           ...player,
@@ -75,8 +85,11 @@ export const playerReducer = (state: BoardState, action: GameAction): Partial<Bo
         return counts;
       }, {} as Record<string, number>);
       
+      console.log("Escaped counts:", escapedCounts);
+      
       Object.entries(escapedCounts).forEach(([team, count]) => {
         if (count >= 3) {
+          console.log(`Team ${team} has won with ${count} escaped members!`);
           gameStatus = "ended";
           winner = team as any;
         }

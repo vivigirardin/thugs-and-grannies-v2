@@ -1,7 +1,7 @@
 import React from "react";
 import { Square } from "@/types/game";
 import { useGame } from "@/context/GameContext";
-import { Shield, User, LogOut, CircleDot, Building, Library, School, Building2, DoorOpen, Goal } from "lucide-react";
+import { Shield, User, LogOut, CircleDot, Building, Library, School, Building2, DoorOpen, Goal, FlagTriangleRight } from "lucide-react";
 
 interface GameCellProps {
   cell: Square;
@@ -21,12 +21,20 @@ const GameCell: React.FC<GameCellProps> = ({
   const { state } = useGame();
   const player = cell.occupiedBy ? state.players.find(p => p.id === cell.occupiedBy) : undefined;
 
+  const isExit = state.exits.some(exit => 
+    exit.row === cell.position.row && exit.col === cell.position.col
+  );
+
   const getCellClass = () => {
+    if (isExit) {
+      return "bg-green-500";  // Use bright green for exits
+    }
+    
     switch (cell.type) {
       case "path":
         return "bg-game-path";
       case "exit":
-        return "bg-game-exit";
+        return "bg-green-500";  // Ensure exits are bright green
       case "police":
         return "bg-game-police";
       case "granny":
@@ -93,14 +101,21 @@ const GameCell: React.FC<GameCellProps> = ({
         isValidMove ? "cursor-pointer ring-2 ring-yellow-400" :
         isSelectable ? "cursor-pointer ring-2 ring-blue-400" :
         isSelected ? "ring-2 ring-green-500" : ""
-      }`}
+      } ${isExit ? "border-2 border-white" : ""}`}
       onClick={onClick}
     >
-      {cell.type === "exit" && (
+      {isExit && (
+        <div className="absolute inset-0 flex items-center justify-center">
+          <FlagTriangleRight className="w-6 h-6 text-white animate-pulse" />
+        </div>
+      )}
+      
+      {cell.type === "exit" && !isExit && (
         <div className="absolute inset-0 flex items-center justify-center">
           <Goal className="w-6 h-6 text-white animate-pulse" />
         </div>
       )}
+      
       {cell.type === "police" && (
         <div className="text-xs font-bold police-icon">👮</div>
       )}
