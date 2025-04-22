@@ -54,7 +54,7 @@ export const generateInitialBoard = (teams: Team[]): BoardState => {
     exits: [
       { row: 9, col: 0 },
       { row: 13, col: 0 },
-      { row: 9, col: 9 },
+      { row: 9, col: 19 },
       { row: 13, col: 19 },
     ],
     jailedPlayers: [],
