@@ -52,10 +52,10 @@ export const generateInitialBoard = (teams: Team[]): BoardState => {
     police: [],
     grannies: [],
     exits: [
-      { row: 0, col: 9 },
-      { row: 0, col: 13 },
-      { row: 19, col: 9 },
-      { row: 19, col: 13 },
+      { row: 9, col: 0 },
+      { row: 13, col: 0 },
+      { row: 9, col: 9 },
+      { row: 13, col: 19 },
     ],
     jailedPlayers: [],
     landmarks: {
