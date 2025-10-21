@@ -54,6 +54,7 @@ export interface Card {
   id: string;
   type: CardType;
   name: string;
+  title?: string;
   description: string;
   flavor?: string;
   team?: Team;

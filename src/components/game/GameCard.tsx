@@ -63,7 +63,7 @@ const GameCard: React.FC<GameCardProps> = ({ card, disabled = false, onClick }) 
     >
       <CardHeader className="pb-2 text-white">
         <div className="flex justify-between items-start">
-          <CardTitle className="text-sm font-semibold">{card.name}</CardTitle>
+          <CardTitle className="text-sm font-semibold">{card.title || card.name}</CardTitle>
           <div className="rounded-full bg-white p-1">
             {getCardIcon(card.icon || "")}
           </div>
