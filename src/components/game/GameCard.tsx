@@ -56,28 +56,39 @@ const getCardTeamClass = (team?: string) => {
 };
 
 const GameCard: React.FC<GameCardProps> = ({ card, disabled = false, onClick }) => {
+  const cardStyle = card.backgroundImage 
+    ? {
+        backgroundImage: `url(${card.backgroundImage})`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center'
+      }
+    : {};
+
   return (
     <Card 
-      className={`w-48 h-64 ${disabled ? 'opacity-50' : 'cursor-pointer'} ${getCardTeamClass(card.team)}`}
+      className={`w-48 h-64 ${disabled ? 'opacity-50' : 'cursor-pointer'} relative overflow-hidden`}
+      style={cardStyle}
       onClick={!disabled && onClick ? onClick : undefined}
     >
-      <CardHeader className="pb-2 text-white">
+      <CardHeader className="pb-2">
         <div className="flex justify-between items-start">
-          <CardTitle className="text-sm font-semibold">{card.title || card.name}</CardTitle>
+          <CardTitle className="text-sm font-bold text-white uppercase tracking-wide bg-black/65 px-2 py-1 rounded">{card.title || card.name}</CardTitle>
           <div className="rounded-full bg-white p-1">
             {getCardIcon(card.icon || "")}
           </div>
         </div>
       </CardHeader>
-      <CardContent className="bg-white rounded-md m-2 p-2 flex-grow">
-        <p className="text-xs">{card.description}</p>
-        {card.flavor && (
-          <p className="text-xs italic mt-2 text-gray-500">"{card.flavor}"</p>
-        )}
+      <CardContent className="flex-grow flex items-center">
+        <div className="bg-black/55 rounded p-2 w-full">
+          <p className="text-xs text-white text-center leading-relaxed">{card.description}</p>
+          {card.flavor && (
+            <p className="text-xs italic mt-2 text-white/80 text-center">{card.flavor}</p>
+          )}
+        </div>
       </CardContent>
       <CardFooter className="pt-0">
         {card.team && (
-          <div className="text-xs text-white capitalize">{card.team} card</div>
+          <div className="text-xs text-white capitalize bg-black/50 px-2 py-1 rounded">{card.team} card</div>
         )}
       </CardFooter>
     </Card>
