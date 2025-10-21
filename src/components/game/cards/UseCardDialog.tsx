@@ -49,43 +49,15 @@ const UseCardDialog: React.FC<UseCardDialogProps> = ({
         </DialogHeader>
         
         <div className="py-4">
-          {card.type === "public_statement" && (
-            <div>
-              <h3 className="font-bold mb-2 flex items-center gap-2">
-                <User size={16} /> Choose opponent
-              </h3>
-              <div className="grid grid-cols-2 gap-2">
-                {opposingPlayers.map(player => (
-                  <Button
-                    key={player.id}
-                    variant={selectedPlayer === player.id ? "default" : "outline"}
-                    className="capitalize"
-                    onClick={() => onPlayerSelect(player.id)}
-                  >
-                    {player.team} ({player.id.split("-")[1]})
-                  </Button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {card.type === "switcheroo" && (
-            <div>
-              <h3 className="font-bold mb-2 flex items-center gap-2">
-                <ArrowRight size={16} /> Swap two meeples
-              </h3>
-              <p className="text-sm">
-                After using this card, select two of your meeples to swap their positions.
-              </p>
-            </div>
-          )}
+          <p className="text-sm">
+            Click "Use Card" to apply the card effect.
+          </p>
         </div>
 
         <DialogFooter>
           <Button variant="secondary" onClick={onClose}>Cancel</Button>
           <Button 
             onClick={onConfirm}
-            disabled={card.type === "public_statement" && !selectedPlayer}
           >
             Use Card
           </Button>

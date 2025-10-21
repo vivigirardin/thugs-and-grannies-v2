@@ -31,13 +31,6 @@ const CardManager: React.FC = () => {
       return;
     }
     
-    setSelectedCard(card);
-
-    if (card.type === "public_statement" || card.type === "switcheroo") {
-      setIsUseCardDialogOpen(true);
-      return;
-    }
-
     cardActions.handleUseCard(card);
   };
 
@@ -64,24 +57,7 @@ const CardManager: React.FC = () => {
 
   const handleConfirmUseCard = () => {
     if (!selectedCard) return;
-
-    switch (selectedCard.type) {
-      case "public_statement":
-        if (targetPlayer) {
-          dispatch({ type: "USE_CARD", cardId: selectedCard.id, targetId: targetPlayer });
-          
-          toast({
-            title: "Card Used",
-            description: `${selectedCard.name} has been used.`,
-          });
-        }
-        break;
-      case "switcheroo":
-      default:
-        cardActions.handleUseCard(selectedCard);
-        break;
-    }
-
+    cardActions.handleUseCard(selectedCard);
     setIsUseCardDialogOpen(false);
     setTargetPlayer(null);
   };

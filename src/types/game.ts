@@ -26,22 +26,28 @@ export type CardEffect =
   | { type: "combat"; power: number };
 
 export type CardType = 
-  | "smoke_bomb" 
-  | "shortcut" 
-  | "fake_pass" 
-  | "switcheroo" 
-  | "dumpster_dive" 
-  | "shiv"
-  | "lookout" 
-  | "bribe" 
-  | "getaway_car" 
-  | "cover_story" 
-  | "lobbyist" 
-  | "public_statement" 
-  | "red_tape" 
-  | "shadow_step" 
-  | "meditation" 
-  | "honor_bound"
+  | "bail"
+  | "thief"
+  | "favor"
+  | "redemption"
+  | "buy_my_vote"
+  | "undercover"
+  | "thank_you_service"
+  | "minister"
+  | "underground"
+  | "swat"
+  | "sick_leave"
+  | "kick_granny"
+  | "distraction"
+  | "hands_up"
+  | "holidays"
+  | "twin_thugs"
+  | "cop_toss"
+  | "parkour"
+  | "negotiator"
+  | "corruption"
+  | "breakdancer"
+  | "thug_fight"
   | "empty";
 
 export interface Card {
@@ -54,6 +60,7 @@ export interface Card {
   used: boolean;
   icon?: string;
   effect?: CardEffect;
+  backgroundImage?: string;
 }
 
 // Game state types

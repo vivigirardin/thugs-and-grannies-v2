@@ -27,13 +27,6 @@ const CardManager: React.FC = () => {
   const otherTeams = Object.keys(state.cards.playerHands).filter(team => team !== currentTeam) as Team[];
 
   const handleUseCard = (card: Card) => {
-    setSelectedCard(card);
-
-    if (card.type === "public_statement" || card.type === "switcheroo") {
-      setIsUseCardDialogOpen(true);
-      return;
-    }
-
     cardActions.handleUseCard(card);
   };
 
@@ -51,13 +44,7 @@ const CardManager: React.FC = () => {
 
   const handleConfirmUseCard = () => {
     if (!selectedCard) return;
-
-    if (selectedCard.type === "public_statement" && targetPlayer) {
-      cardActions.handleUseCard(selectedCard);
-    } else {
-      cardActions.handleUseCard(selectedCard);
-    }
-
+    cardActions.handleUseCard(selectedCard);
     setIsUseCardDialogOpen(false);
     setTargetPlayer(null);
   };
