@@ -134,7 +134,6 @@ export interface BoardState {
 
 export type GameAction =
   | { type: "START_GAME"; teams: Team[] }
-  | { type: "ROLL_DICE" }
   | { type: "SELECT_MEEPLE"; playerId: string }
   | { type: "DESELECT_MEEPLE" }
   | { type: "MOVE_PLAYER"; position: Position }

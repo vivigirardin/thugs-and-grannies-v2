@@ -61,12 +61,6 @@ export const gameStateReducer = (state: BoardState, action: GameAction): Partial
     case "START_GAME":
       return generateInitialBoard(action.teams);
       
-    case "ROLL_DICE":
-      return {
-        diceValue: Math.floor(Math.random() * 6) + 1,
-        activeMeeple: null,
-      };
-      
     case "NEXT_TURN": {
       console.log("NEXT_TURN action started");
       console.log("Current Game State:", JSON.stringify({

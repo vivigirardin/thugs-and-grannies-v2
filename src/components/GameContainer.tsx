@@ -4,8 +4,8 @@ import { GameProvider } from "@/context/GameContext";
 import GameBoard from "./game/GameBoard";
 import TeamSelector from "./game/TeamSelector";
 import GameRules from "./game/GameRules";
-import GameControls from "./game/GameControls";
 import CardManager from "./game/CardManager";
+import EndTurnButton from "./game/controls/EndTurnButton";
 import "./game/GameStyles.css";
 
 const GameContainer: React.FC = () => {
@@ -18,8 +18,8 @@ const GameContainer: React.FC = () => {
           <CardManager />
         </div>
         
-        <div className={`${isMobile ? "w-full" : ""} mt-2 mb-2`}>
-          <GameControls />
+        <div className={`${isMobile ? "w-full" : ""} mt-2 mb-2 flex justify-end`}>
+          <EndTurnButton />
         </div>
         
         <div className={`${isMobile ? "w-full" : ""} overflow-auto max-w-full`}>
