@@ -67,7 +67,6 @@ const CardManager: React.FC = () => {
         <div className="flex justify-center mb-4">
           <Button 
             onClick={cardActions.handleDrawCard} 
-            disabled={state.diceValue === 0}
             className="relative transition-all hover:bg-primary-hover active:scale-95"
           >
             Draw Card
@@ -79,7 +78,6 @@ const CardManager: React.FC = () => {
         <PlayerHand 
           team={currentTeam}
           cards={currentHand}
-          diceValue={state.diceValue}
           onUseCard={handleUseCard}
           onTradeCard={handleTradeCard}
         />

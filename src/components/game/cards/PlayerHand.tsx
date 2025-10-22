@@ -7,12 +7,11 @@ import GameCard from "../GameCard";
 interface PlayerHandProps {
   team: Team;
   cards: Card[];
-  diceValue: number;
   onUseCard: (card: Card) => void;
   onTradeCard: (card: Card) => void;
 }
 
-const PlayerHand: React.FC<PlayerHandProps> = ({ team, cards, diceValue, onUseCard, onTradeCard }) => {
+const PlayerHand: React.FC<PlayerHandProps> = ({ team, cards, onUseCard, onTradeCard }) => {
   return (
     <div>
       <h3 className="font-bold mb-2 capitalize">{team}'s Hand</h3>
@@ -24,14 +23,14 @@ const PlayerHand: React.FC<PlayerHandProps> = ({ team, cards, diceValue, onUseCa
             <div key={card.id} className="flex flex-col items-center">
               <GameCard 
                 card={card} 
-                disabled={card.used || diceValue > 0} 
-                onClick={() => !card.used && diceValue === 0 ? onUseCard(card) : null} 
+                disabled={card.used} 
+                onClick={() => !card.used ? onUseCard(card) : null} 
               />
               <div className="flex gap-2 mt-2">
                 <Button 
                   size="sm" 
                   variant="outline" 
-                  disabled={card.used || diceValue > 0} 
+                  disabled={card.used} 
                   onClick={() => onUseCard(card)}
                 >
                   Use
@@ -39,7 +38,7 @@ const PlayerHand: React.FC<PlayerHandProps> = ({ team, cards, diceValue, onUseCa
                 <Button 
                   size="sm" 
                   variant="outline" 
-                  disabled={card.used || diceValue > 0} 
+                  disabled={card.used} 
                   onClick={() => onTradeCard(card)}
                 >
                   Trade

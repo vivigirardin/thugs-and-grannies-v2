@@ -5,14 +5,12 @@ import { Card } from "@/types/game";
 
 interface HandCardActionsProps {
   card: Card;
-  diceValue: number;
   onUse: (card: Card) => void;
   onTrade: (card: Card) => void;
 }
 
 const HandCardActions: React.FC<HandCardActionsProps> = ({ 
   card, 
-  diceValue, 
   onUse, 
   onTrade 
 }) => {
@@ -21,7 +19,7 @@ const HandCardActions: React.FC<HandCardActionsProps> = ({
       <Button 
         size="sm" 
         variant="outline" 
-        disabled={card.used || diceValue > 0} 
+        disabled={card.used} 
         onClick={() => onUse(card)}
       >
         Use
@@ -29,7 +27,7 @@ const HandCardActions: React.FC<HandCardActionsProps> = ({
       <Button 
         size="sm" 
         variant="outline" 
-        disabled={card.used || diceValue > 0} 
+        disabled={card.used} 
         onClick={() => onTrade(card)}
       >
         Trade

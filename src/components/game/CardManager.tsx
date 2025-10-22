@@ -35,15 +35,6 @@ const CardManager: React.FC = () => {
   };
 
   const handleTradeCard = (card: Card) => {
-    if (state.diceValue === 0) {
-      toast({
-        title: "Can't Trade Now",
-        description: "You need to roll the dice first.",
-        variant: "destructive",
-      });
-      return;
-    }
-    
     setSelectedCard(card);
     setIsTradeDialogOpen(true);
   };
@@ -80,7 +71,6 @@ const CardManager: React.FC = () => {
         <div className="flex justify-center mb-4">
           <Button 
             onClick={cardActions.handleDrawCard} 
-            disabled={state.diceValue === 0}
             className="relative transition-all hover:bg-primary-hover active:scale-95"
           >
             Draw Card
@@ -92,7 +82,6 @@ const CardManager: React.FC = () => {
         <PlayerHand 
           team={currentTeam}
           cards={currentHand}
-          diceValue={state.diceValue}
           onUseCard={handleUseCard}
           onTradeCard={handleTradeCard}
         />
