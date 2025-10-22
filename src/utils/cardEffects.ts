@@ -51,6 +51,15 @@ export const useCard = (state: BoardState, cardId: string, targetId?: string, po
 const applyCardEffect = (state: BoardState, card: any, targetId?: string, position?: Position): BoardState => {
   let newState = { ...state };
   
+  // Parse steps from flavor text
+  if (card.flavor) {
+    const stepsMatch = card.flavor.match(/Steps:\s*(\d+)/i);
+    if (stepsMatch) {
+      const steps = parseInt(stepsMatch[1], 10);
+      newState.diceValue = steps;
+    }
+  }
+  
   switch (card.type) {
     case "smoke_bomb":
       const playerIds = state.players

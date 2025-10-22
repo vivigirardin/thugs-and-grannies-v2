@@ -2,7 +2,6 @@
 import React, { useState, useEffect } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useGame } from "@/context/GameContext";
-import DiceControl from "@/components/game/controls/DiceControl";
 import EndTurnButton from "@/components/game/controls/EndTurnButton";
 import TurnIndicatorDialog from "@/components/game/controls/TurnIndicatorDialog";
 
@@ -19,8 +18,7 @@ const GameControls: React.FC = () => {
 
   return (
     <div className={`flex flex-col ${isMobile ? "items-start gap-2" : "items-center gap-4"} mb-4`}>
-      <div className="flex items-center justify-between w-full">
-        <DiceControl />
+      <div className="flex items-center justify-end w-full">
         <EndTurnButton />
       </div>
       

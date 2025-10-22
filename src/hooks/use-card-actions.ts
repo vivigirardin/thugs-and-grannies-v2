@@ -7,15 +7,6 @@ export const useCardActions = () => {
   const { state, dispatch } = useGame();
 
   const handleDrawCard = () => {
-    if (state.diceValue === 0) {
-      toast({
-        title: "Can't Draw Now",
-        description: "You need to roll the dice first.",
-        variant: "destructive",
-      });
-      return;
-    }
-    
     if (state.cards.justDrawn) {
       toast({
         title: "Card Already Drawn",
@@ -51,15 +42,6 @@ export const useCardActions = () => {
   };
 
   const handleTradeCard = (fromTeam: Team, toTeam: Team, cardId: string) => {
-    if (state.diceValue === 0) {
-      toast({
-        title: "Can't Trade Now",
-        description: "You need to roll the dice first.",
-        variant: "destructive",
-      });
-      return;
-    }
-    
     dispatch({ 
       type: "OFFER_TRADE", 
       fromTeam, 
